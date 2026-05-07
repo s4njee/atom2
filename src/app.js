@@ -10,6 +10,8 @@ import { createStyleSelector } from './ui/styleSelector.js';
 import { createSidebar } from './ui/sidebar.js';
 import { createStatusBar } from './ui/statusBar.js';
 import { createAtomTooltip } from './ui/atomTooltip.js';
+import { createMeasurementToggles } from './ui/measurementToggles.js';
+import { buildBondLengths, buildBondAngles, disposeMeasurementGroup } from './scene/measurements.js';
 import { createStore } from './state/store.js';
 import { readURLState, writeURLState } from './state/url.js';
 import { addRecent } from './state/storage.js';
@@ -66,6 +68,33 @@ export function startApp() {
     onPick: (entry) => loadCID(entry.cid, entry.name),
   });
 
+  let measureState = { lengths: false, angles: false };
+  let lengthsGroup = null;
+  let anglesGroup = null;
+
+  function clearMeasurements() {
+    if (lengthsGroup) { viewer.scene.remove(lengthsGroup); disposeMeasurementGroup(lengthsGroup); lengthsGroup = null; }
+    if (anglesGroup) { viewer.scene.remove(anglesGroup); disposeMeasurementGroup(anglesGroup); anglesGroup = null; }
+  }
+
+  function refreshMeasurements() {
+    clearMeasurements();
+    const molecule = store.get().molecule;
+    if (!molecule) return;
+    if (measureState.lengths) {
+      lengthsGroup = buildBondLengths(molecule);
+      viewer.scene.add(lengthsGroup);
+    }
+    if (measureState.angles) {
+      anglesGroup = buildBondAngles(molecule);
+      viewer.scene.add(anglesGroup);
+    }
+  }
+
+  createMeasurementToggles(document.getElementById('measurements-container'), {
+    onChange: (s) => { measureState = s; refreshMeasurements(); },
+  });
+
   createSearchBar(document.getElementById('search-container'), {
     client,
     onSubmit: (input) => loadFromInput(input),
@@ -100,6 +129,7 @@ export function startApp() {
       activeStyle.onMoleculeChanged(viewer, meshes);
       fitCamera(viewer, meshes);
       store.set({ molecule: data, meshes });
+      refreshMeasurements();
       addRecent({ cid, name: data.name });
       sidebar.refresh();
       writeURLState({ cid, style: activeStyle.id });
