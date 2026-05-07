@@ -12,11 +12,19 @@ function ensureMaterials() {
   if (atomMaterial) return;
   atomMaterial = new THREE.MeshStandardMaterial({
     vertexColors: true,
-    emissive: 0xffffff,
-    emissiveIntensity: 0.6,
     metalness: 0.2,
-    roughness: 0.4,
+    roughness: 0.35,
   });
+  // Use the per-instance color as emissive too, so each atom glows in its CPK color.
+  atomMaterial.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      '#include <emissivemap_fragment>',
+      `#include <emissivemap_fragment>
+       #ifdef USE_COLOR
+         totalEmissiveRadiance += vColor * 0.9;
+       #endif`
+    );
+  };
   bondMaterial = new THREE.MeshStandardMaterial({
     color: 0x66ffff,
     emissive: 0x33ccff,

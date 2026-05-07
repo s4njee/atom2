@@ -5,6 +5,33 @@ let atomMaterial = null;
 let bondMaterial = null;
 let ringMaterial = null;
 let envTexture = null;
+let gridTexture = null;
+
+function ensureGrid() {
+  if (gridTexture) return gridTexture;
+  const size = 512;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#eef3f8';
+  ctx.fillRect(0, 0, size, size);
+  ctx.strokeStyle = '#9fb3cc';
+  const step = 32;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= size; i += step) {
+    ctx.beginPath(); ctx.moveTo(i + 0.5, 0); ctx.lineTo(i + 0.5, size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i + 0.5); ctx.lineTo(size, i + 0.5); ctx.stroke();
+  }
+  // Heavier line every 4 cells.
+  ctx.strokeStyle = '#6b86a3';
+  ctx.lineWidth = 1.5;
+  for (let i = 0; i <= size; i += step * 4) {
+    ctx.beginPath(); ctx.moveTo(i + 0.5, 0); ctx.lineTo(i + 0.5, size); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, i + 0.5); ctx.lineTo(size, i + 0.5); ctx.stroke();
+  }
+  gridTexture = new THREE.CanvasTexture(canvas);
+  return gridTexture;
+}
 
 function ensureMaterials() {
   if (atomMaterial) return;
@@ -49,7 +76,7 @@ export const crystal = {
 
   apply(viewer, meshes) {
     ensureMaterials();
-    viewer.setBackground(new THREE.Color(0xe8eef5));
+    viewer.setBackground(ensureGrid());
     viewer.setEnvironment(ensureEnvironment(viewer));
     viewer.setLights([
       new THREE.AmbientLight(0xffffff, 0.3),
