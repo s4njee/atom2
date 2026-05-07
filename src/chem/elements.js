@@ -44,10 +44,34 @@ export const VDW_RADII = {
   default: 1.50,
 };
 
+export const ELEMENT_NAMES = {
+  H: 'Hydrogen', He: 'Helium',
+  Li: 'Lithium', Be: 'Beryllium', B: 'Boron', C: 'Carbon', N: 'Nitrogen',
+  O: 'Oxygen', F: 'Fluorine', Ne: 'Neon',
+  Na: 'Sodium', Mg: 'Magnesium', Al: 'Aluminum', Si: 'Silicon', P: 'Phosphorus',
+  S: 'Sulfur', Cl: 'Chlorine', Ar: 'Argon',
+  K: 'Potassium', Ca: 'Calcium', Fe: 'Iron', Cu: 'Copper', Zn: 'Zinc',
+  Br: 'Bromine', I: 'Iodine',
+};
+
+export const ATOMIC_NUMBERS = {
+  H: 1, He: 2, Li: 3, Be: 4, B: 5, C: 6, N: 7, O: 8, F: 9, Ne: 10,
+  Na: 11, Mg: 12, Al: 13, Si: 14, P: 15, S: 16, Cl: 17, Ar: 18,
+  K: 19, Ca: 20, Fe: 26, Cu: 29, Zn: 30, Br: 35, I: 53,
+};
+
 export function getColor(element) {
   return CPK_COLORS[element] ?? CPK_COLORS.default;
 }
 
 export function getRadius(element) {
   return VDW_RADII[element] ?? VDW_RADII.default;
+}
+
+export function getName(element) {
+  return ELEMENT_NAMES[element] ?? element;
+}
+
+export function getAtomicNumber(element) {
+  return ATOMIC_NUMBERS[element] ?? null;
 }
