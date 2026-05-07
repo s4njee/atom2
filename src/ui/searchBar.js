@@ -8,22 +8,24 @@ export function createSearchBar(container, { client, onSubmit }) {
   input.type = 'text';
   input.placeholder = 'PubChem name, URL, or CID';
   input.style.width = '320px';
-  input.style.padding = '6px 8px';
   input.setAttribute('aria-label', 'PubChem search');
   const list = document.createElement('ul');
   list.style.position = 'absolute';
   list.style.top = '100%';
   list.style.left = '0';
   list.style.right = '0';
-  list.style.margin = '0';
+  list.style.margin = '4px 0 0';
   list.style.padding = '0';
   list.style.listStyle = 'none';
-  list.style.background = 'white';
-  list.style.border = '1px solid #ccc';
+  list.style.background = '#161b22';
+  list.style.color = '#d8dde6';
+  list.style.border = '1px solid #252b34';
+  list.style.borderRadius = '4px';
   list.style.maxHeight = '240px';
   list.style.overflow = 'auto';
   list.style.display = 'none';
   list.style.zIndex = '10';
+  list.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
 
   wrap.appendChild(input);
   wrap.appendChild(list);
@@ -45,9 +47,9 @@ export function createSearchBar(container, { client, onSubmit }) {
     suggestions.forEach((name, i) => {
       const li = document.createElement('li');
       li.textContent = name;
-      li.style.padding = '6px 8px';
+      li.style.padding = '6px 10px';
       li.style.cursor = 'pointer';
-      li.style.background = i === activeIdx ? '#eef' : 'white';
+      li.style.background = i === activeIdx ? '#1f2630' : 'transparent';
       li.addEventListener('mousedown', (e) => {
         e.preventDefault();
         input.value = name;

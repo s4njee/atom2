@@ -11,8 +11,8 @@ describe('url state', () => {
   });
 
   it('readURLState parses cid and style', () => {
-    window.history.replaceState({}, '', '/?cid=2244&style=neon');
-    expect(readURLState()).toEqual({ cid: 2244, style: 'neon' });
+    window.history.replaceState({}, '', '/?cid=2244&style=xray');
+    expect(readURLState()).toEqual({ cid: 2244, style: 'xray' });
   });
 
   it('writeURLState updates the query string without reloading', () => {

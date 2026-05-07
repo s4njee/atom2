@@ -51,7 +51,7 @@ export function startApp() {
   const store = createStore({
     molecule: null,
     meshes: null,
-    style: initial.style ?? 'neon',
+    style: initial.style ?? 'xray',
   });
 
   let activeStyle = getStyle(store.get().style);

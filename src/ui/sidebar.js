@@ -9,7 +9,8 @@ export function createSidebar(container, { onPick }) {
     h.style.margin = '12px 0 6px';
     h.style.fontSize = '13px';
     h.style.textTransform = 'uppercase';
-    h.style.color = '#666';
+    h.style.color = '#8a93a3';
+    h.style.letterSpacing = '0.05em';
     container.appendChild(h);
     const ul = document.createElement('ul');
     ul.style.listStyle = 'none';
@@ -35,7 +36,7 @@ export function createSidebar(container, { onPick }) {
     name.style.cursor = 'pointer';
     name.style.font = 'inherit';
     name.style.padding = '0';
-    name.style.color = '#0366d6';
+    name.style.color = '#79c0ff';
     name.addEventListener('click', () => onPick(entry));
     li.appendChild(name);
     if (showStar) {
@@ -45,6 +46,7 @@ export function createSidebar(container, { onPick }) {
       star.style.border = 'none';
       star.style.cursor = 'pointer';
       star.style.fontSize = '14px';
+      star.style.color = isFavorite(entry.cid) ? '#f1c40f' : '#8a93a3';
       star.addEventListener('click', () => {
         toggleFavorite(entry);
         refresh();

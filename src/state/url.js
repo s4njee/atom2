@@ -1,4 +1,4 @@
-const VALID_STYLES = new Set(['neon', 'crystal', 'toon', 'xray', 'blueprint']);
+const VALID_STYLES = new Set(['crystal', 'toon', 'xray', 'blueprint']);
 
 export function readURLState() {
   const params = new URLSearchParams(window.location.search);
