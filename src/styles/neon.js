@@ -20,7 +20,7 @@ function ensureMaterials() {
       '#include <emissivemap_fragment>',
       `#include <emissivemap_fragment>
        #ifdef USE_INSTANCING_COLOR
-         totalEmissiveRadiance += vColor * 0.9;
+         totalEmissiveRadiance += vColor * 2.2;
        #endif`
     );
   };
@@ -56,8 +56,8 @@ export const neon = {
     viewer.setBackground(new THREE.Color(0x05050a));
     viewer.setEnvironment(null);
     viewer.setLights([
-      new THREE.AmbientLight(0x222244, 0.4),
-      new THREE.PointLight(0xffffff, 0.5),
+      new THREE.AmbientLight(0x4455aa, 0.6),
+      new THREE.DirectionalLight(0xffffff, 0.8),
     ]);
     viewer.setPostProcessing([ensureBloom(viewer)]);
     this.onMoleculeChanged(viewer, meshes);
