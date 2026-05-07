@@ -11,7 +11,8 @@ import { createSidebar } from './ui/sidebar.js';
 import { createStatusBar } from './ui/statusBar.js';
 import { createAtomTooltip } from './ui/atomTooltip.js';
 import { createMeasurementToggles } from './ui/measurementToggles.js';
-import { buildBondLengths, buildBondAngles, disposeMeasurementGroup } from './scene/measurements.js';
+import { buildLengthLabels, buildAngleArcs, disposeMeasurementGroup } from './scene/measurements.js';
+import { detectFunctionalGroups } from './chem/functionalGroups.js';
 import { createStore } from './state/store.js';
 import { readURLState, writeURLState } from './state/url.js';
 import { addRecent } from './state/storage.js';
@@ -81,12 +82,13 @@ export function startApp() {
     clearMeasurements();
     const molecule = store.get().molecule;
     if (!molecule) return;
-    if (measureState.lengths) {
-      lengthsGroup = buildBondLengths(molecule);
+    const groups = detectFunctionalGroups(molecule, molecule.aromaticRings);
+    if (measureState.lengths && groups.lengths.length > 0) {
+      lengthsGroup = buildLengthLabels(molecule, groups.lengths);
       viewer.scene.add(lengthsGroup);
     }
-    if (measureState.angles) {
-      anglesGroup = buildBondAngles(molecule);
+    if (measureState.angles && groups.angles.length > 0) {
+      anglesGroup = buildAngleArcs(molecule, groups.angles);
       viewer.scene.add(anglesGroup);
     }
   }
