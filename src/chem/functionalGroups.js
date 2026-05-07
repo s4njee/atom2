@@ -1,13 +1,25 @@
-// Detect a small set of common functional groups for stylistic annotation.
-// Returns flat arrays of length items and angle items, each tagged with a
-// color and a short label that gets prepended to the measurement.
+// Detect a variety of functional groups for stylistic annotation.
+// More-specific groups (amide, ester, carboxyl) are detected first and claim
+// their bonds, so a C=O inside an amide doesn't also trigger a generic
+// "carbonyl" label.
 
 export const GROUP_COLORS = {
-  carbonyl: '#ff8a4d',  // C=O
-  hydroxyl: '#79c0ff',  // O–H
-  amine:    '#b48cff',  // N–H
-  halide:   '#7fdb91',  // C–X
-  nitrile:  '#ffb74d',  // C≡N
+  amide:        '#ff79b3',
+  ester:        '#ffb74d',
+  carboxyl:     '#ff5577',
+  carbonyl:     '#ff8a4d',
+  hydroxyl:     '#79c0ff',
+  ether:        '#5fbcd3',
+  amine:        '#b48cff',
+  imine:        '#c08aff',
+  halide:       '#7fdb91',
+  nitrile:      '#ffd24a',
+  nitro:        '#ff7676',
+  thiol:        '#e6e052',
+  alkene:       '#9ad97a',
+  alkyne:       '#bedc7a',
+  phosphate:    '#ff9bd1',
+  sulfonyl:     '#fff176',
 };
 
 const HALIDES = new Set(['F', 'Cl', 'Br', 'I']);
@@ -18,7 +30,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
   const aromaticAtoms = new Set();
   for (const r of aromaticRings) for (const i of r.atomIndices) aromaticAtoms.add(i);
 
-  // Adjacency: index → [{ atom, order, bondIdx }]
+  // Adjacency: atomIndex → [{ atom, order, bondIdx }]
   const neighbors = atoms.map(() => []);
   for (let i = 0; i < bonds.length; i++) {
     const b = bonds[i];
@@ -28,94 +40,224 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
 
   const lengths = []; // { bondIdx, color, prefix, group }
   const angles = [];  // { triple: [i,j,k], color, prefix, group }
+  const claimedBonds = new Set();
+  const claimedCarbonyls = new Set(); // C atom indices already in a higher-priority group
   const seenLength = new Set();
   const seenAngle = new Set();
 
-  function pushLength(bondIdx, color, prefix, group) {
+  function addLength(bondIdx, color, prefix, group) {
     if (seenLength.has(bondIdx)) return;
     seenLength.add(bondIdx);
+    claimedBonds.add(bondIdx);
     lengths.push({ bondIdx, color, prefix, group });
   }
-  function pushAngle(triple, color, prefix, group) {
-    const key = canonicalAngleKey(triple);
+  function addAngle(triple, color, prefix, group) {
+    const key = `${triple[1]}|${Math.min(triple[0], triple[2])}-${Math.max(triple[0], triple[2])}`;
     if (seenAngle.has(key)) return;
     seenAngle.add(key);
     angles.push({ triple, color, prefix, group });
   }
 
-  // Bond-driven groups
+  // Helpers
+  const elem = (i) => atoms[i].element;
+
+  // Find C=O bonds and index by carbon: cIdx → { oIdx, bondIdx }
+  const carbonylAtCarbon = new Map();
   for (let i = 0; i < bonds.length; i++) {
     const b = bonds[i];
-    const ea = atoms[b.a].element;
-    const eb = atoms[b.b].element;
+    if (b.order !== 2) continue;
+    if (elem(b.a) === 'C' && elem(b.b) === 'O') carbonylAtCarbon.set(b.a, { oIdx: b.b, bondIdx: i });
+    else if (elem(b.b) === 'C' && elem(b.a) === 'O') carbonylAtCarbon.set(b.b, { oIdx: b.a, bondIdx: i });
+  }
 
-    // Carbonyl C=O (skip if either atom is in an aromatic ring — that's just the ring)
-    if (b.order === 2 &&
-        ((ea === 'C' && eb === 'O') || (ea === 'O' && eb === 'C')) &&
-        !aromaticAtoms.has(b.a) && !aromaticAtoms.has(b.b)) {
-      const cIdx = ea === 'C' ? b.a : b.b;
-      const oIdx = ea === 'C' ? b.b : b.a;
-      pushLength(i, GROUP_COLORS.carbonyl, 'C=O', 'carbonyl');
-      const otherCNeighbors = neighbors[cIdx].filter(n => n.atom !== oIdx).slice(0, 2);
-      for (const n of otherCNeighbors) {
-        pushAngle([n.atom, cIdx, oIdx], GROUP_COLORS.carbonyl, '∠', 'carbonyl');
-      }
+  // 1. Amide — C(=O) bonded to N (single bond)
+  for (const [cIdx, { oIdx, bondIdx: coBond }] of carbonylAtCarbon) {
+    if (aromaticAtoms.has(cIdx)) continue;
+    const nN = neighbors[cIdx].find((n) => n.atom !== oIdx && elem(n.atom) === 'N' && n.order === 1);
+    if (!nN) continue;
+    addLength(coBond, GROUP_COLORS.amide, 'amide C=O', 'amide');
+    addLength(nN.bondIdx, GROUP_COLORS.amide, 'amide C–N', 'amide');
+    addAngle([oIdx, cIdx, nN.atom], GROUP_COLORS.amide, '∠', 'amide');
+    claimedCarbonyls.add(cIdx);
+  }
+
+  // 2. Carboxylic acid — C(=O) bonded to O–H
+  for (const [cIdx, { oIdx, bondIdx: coBond }] of carbonylAtCarbon) {
+    if (claimedCarbonyls.has(cIdx)) continue;
+    if (aromaticAtoms.has(cIdx)) continue;
+    const ohN = neighbors[cIdx].find((n) => {
+      if (n.atom === oIdx || elem(n.atom) !== 'O' || n.order !== 1) return false;
+      return neighbors[n.atom].some((nn) => elem(nn.atom) === 'H');
+    });
+    if (!ohN) continue;
+    addLength(coBond, GROUP_COLORS.carboxyl, 'COOH C=O', 'carboxyl');
+    addLength(ohN.bondIdx, GROUP_COLORS.carboxyl, 'COOH C–O', 'carboxyl');
+    const ohHydrogen = neighbors[ohN.atom].find((nn) => elem(nn.atom) === 'H');
+    if (ohHydrogen) {
+      addLength(ohHydrogen.bondIdx, GROUP_COLORS.carboxyl, 'COOH O–H', 'carboxyl');
+      addAngle([cIdx, ohN.atom, ohHydrogen.atom], GROUP_COLORS.carboxyl, '∠', 'carboxyl');
     }
+    addAngle([oIdx, cIdx, ohN.atom], GROUP_COLORS.carboxyl, '∠', 'carboxyl');
+    claimedCarbonyls.add(cIdx);
+  }
 
-    // Halide C–X
-    if (b.order === 1) {
-      const isHalide = (ea === 'C' && HALIDES.has(eb)) || (eb === 'C' && HALIDES.has(ea));
-      if (isHalide) {
-        const x = HALIDES.has(eb) ? eb : ea;
-        pushLength(i, GROUP_COLORS.halide, `C–${x}`, 'halide');
-      }
+  // 3. Ester — C(=O) bonded to O–C (no H on that O)
+  for (const [cIdx, { oIdx, bondIdx: coBond }] of carbonylAtCarbon) {
+    if (claimedCarbonyls.has(cIdx)) continue;
+    if (aromaticAtoms.has(cIdx)) continue;
+    const oN = neighbors[cIdx].find((n) => {
+      if (n.atom === oIdx || elem(n.atom) !== 'O' || n.order !== 1) return false;
+      const oNeighbors = neighbors[n.atom];
+      const hasHydrogen = oNeighbors.some((nn) => elem(nn.atom) === 'H');
+      const otherCarbon = oNeighbors.some((nn) => nn.atom !== cIdx && elem(nn.atom) === 'C');
+      return !hasHydrogen && otherCarbon;
+    });
+    if (!oN) continue;
+    addLength(coBond, GROUP_COLORS.ester, 'ester C=O', 'ester');
+    addLength(oN.bondIdx, GROUP_COLORS.ester, 'ester C–O', 'ester');
+    addAngle([oIdx, cIdx, oN.atom], GROUP_COLORS.ester, '∠', 'ester');
+    claimedCarbonyls.add(cIdx);
+  }
+
+  // 4. Generic carbonyl (ketone / aldehyde) — remaining C=O
+  for (const [cIdx, { oIdx, bondIdx: coBond }] of carbonylAtCarbon) {
+    if (claimedCarbonyls.has(cIdx)) continue;
+    if (aromaticAtoms.has(cIdx)) continue;
+    addLength(coBond, GROUP_COLORS.carbonyl, 'C=O', 'carbonyl');
+    const others = neighbors[cIdx].filter((n) => n.atom !== oIdx).slice(0, 2);
+    for (const n of others) {
+      addAngle([n.atom, cIdx, oIdx], GROUP_COLORS.carbonyl, '∠', 'carbonyl');
     }
+    claimedCarbonyls.add(cIdx);
+  }
 
-    // Nitrile C≡N
-    if (b.order === 3 && ((ea === 'C' && eb === 'N') || (ea === 'N' && eb === 'C'))) {
-      pushLength(i, GROUP_COLORS.nitrile, 'C≡N', 'nitrile');
+  // 5. Nitro -NO2 — N with two oxygens (one or both via double / aromatic-ish bond)
+  for (let i = 0; i < atoms.length; i++) {
+    if (elem(i) !== 'N') continue;
+    const oxygens = neighbors[i].filter((n) => elem(n.atom) === 'O');
+    if (oxygens.length < 2) continue;
+    for (const o of oxygens) addLength(o.bondIdx, GROUP_COLORS.nitro, 'NO₂', 'nitro');
+    addAngle([oxygens[0].atom, i, oxygens[1].atom], GROUP_COLORS.nitro, '∠', 'nitro');
+  }
+
+  // 6. Sulfonyl S(=O)(=O)
+  for (let i = 0; i < atoms.length; i++) {
+    if (elem(i) !== 'S') continue;
+    const dblO = neighbors[i].filter((n) => elem(n.atom) === 'O' && n.order >= 2);
+    if (dblO.length < 2) continue;
+    for (const o of dblO) addLength(o.bondIdx, GROUP_COLORS.sulfonyl, 'SO₂', 'sulfonyl');
+    addAngle([dblO[0].atom, i, dblO[1].atom], GROUP_COLORS.sulfonyl, '∠', 'sulfonyl');
+  }
+
+  // 7. Phosphate-like P–O bonds (any P bonded to O)
+  for (let i = 0; i < atoms.length; i++) {
+    if (elem(i) !== 'P') continue;
+    const os = neighbors[i].filter((n) => elem(n.atom) === 'O');
+    for (const o of os) addLength(o.bondIdx, GROUP_COLORS.phosphate, 'P–O', 'phosphate');
+  }
+
+  // 8. Hydroxyl — O bonded to H + heavy single bond, not part of carboxyl
+  for (let i = 0; i < atoms.length; i++) {
+    if (elem(i) !== 'O') continue;
+    if (aromaticAtoms.has(i)) continue;
+    const ns = neighbors[i];
+    if (ns.some((n) => n.order >= 2)) continue;
+    const hN = ns.find((n) => elem(n.atom) === 'H' && n.order === 1);
+    const heavyN = ns.find((n) => elem(n.atom) !== 'H' && n.order === 1);
+    if (!hN || !heavyN) continue;
+    if (claimedBonds.has(hN.bondIdx)) continue; // already in carboxyl
+    addLength(hN.bondIdx, GROUP_COLORS.hydroxyl, 'O–H', 'hydroxyl');
+    addAngle([heavyN.atom, i, hN.atom], GROUP_COLORS.hydroxyl, '∠', 'hydroxyl');
+  }
+
+  // 9. Ether — O with two heavy single-bond neighbors, no H, no double bond, not in ring with claimed bonds
+  for (let i = 0; i < atoms.length; i++) {
+    if (elem(i) !== 'O') continue;
+    if (aromaticAtoms.has(i)) continue;
+    const ns = neighbors[i];
+    if (ns.length !== 2) continue;
+    if (ns.some((n) => n.order >= 2 || elem(n.atom) === 'H')) continue;
+    // Exclude if part of an ester / carboxyl already claimed
+    if (ns.every((n) => claimedBonds.has(n.bondIdx))) continue;
+    addAngle([ns[0].atom, i, ns[1].atom], GROUP_COLORS.ether, '∠ ether', 'ether');
+    for (const n of ns) {
+      if (!claimedBonds.has(n.bondIdx)) addLength(n.bondIdx, GROUP_COLORS.ether, 'ether C–O', 'ether');
     }
   }
 
-  // Atom-driven groups
+  // 10. Thiol — S bonded to H
   for (let i = 0; i < atoms.length; i++) {
-    const el = atoms[i].element;
+    if (elem(i) !== 'S') continue;
     const ns = neighbors[i];
+    const hN = ns.find((n) => elem(n.atom) === 'H' && n.order === 1);
+    if (!hN) continue;
+    addLength(hN.bondIdx, GROUP_COLORS.thiol, 'S–H', 'thiol');
+  }
 
-    // Hydroxyl: O bonded to one H and one heavy atom (single bonds only, not in ring)
-    if (el === 'O' && !aromaticAtoms.has(i)) {
-      const hN = ns.find(n => atoms[n.atom].element === 'H' && n.order === 1);
-      const heavyN = ns.find(n => atoms[n.atom].element !== 'H' && n.order === 1);
-      const hasDoubleBond = ns.some(n => n.order >= 2);
-      if (hN && heavyN && !hasDoubleBond) {
-        pushLength(hN.bondIdx, GROUP_COLORS.hydroxyl, 'O–H', 'hydroxyl');
-        pushAngle([heavyN.atom, i, hN.atom], GROUP_COLORS.hydroxyl, '∠', 'hydroxyl');
-      }
-    }
+  // 11. Imine — C=N (excluding nitrile, and skipping aromatic N's that are part of a ring system)
+  for (let i = 0; i < bonds.length; i++) {
+    const b = bonds[i];
+    if (b.order !== 2) continue;
+    const isCN = (elem(b.a) === 'C' && elem(b.b) === 'N') || (elem(b.a) === 'N' && elem(b.b) === 'C');
+    if (!isCN) continue;
+    if (aromaticAtoms.has(b.a) || aromaticAtoms.has(b.b)) continue;
+    addLength(i, GROUP_COLORS.imine, 'C=N', 'imine');
+  }
 
-    // Amine: N (non-aromatic, no double bonds) bonded to ≥1 H and a heavy atom
-    if (el === 'N' && !aromaticAtoms.has(i)) {
-      const hasDouble = ns.some(n => n.order >= 2);
-      if (!hasDouble) {
-        const hNs = ns.filter(n => atoms[n.atom].element === 'H');
-        const heavyN = ns.find(n => atoms[n.atom].element !== 'H');
-        if (hNs.length > 0 && heavyN) {
-          for (const h of hNs) {
-            pushLength(h.bondIdx, GROUP_COLORS.amine, 'N–H', 'amine');
-            pushAngle([heavyN.atom, i, h.atom], GROUP_COLORS.amine, '∠', 'amine');
-          }
-        }
-      }
+  // 12. Nitrile C≡N
+  for (let i = 0; i < bonds.length; i++) {
+    const b = bonds[i];
+    if (b.order !== 3) continue;
+    if ((elem(b.a) === 'C' && elem(b.b) === 'N') || (elem(b.a) === 'N' && elem(b.b) === 'C')) {
+      addLength(i, GROUP_COLORS.nitrile, 'C≡N', 'nitrile');
     }
+  }
+
+  // 13. Amine — non-aromatic N with no double bonds, not already claimed (e.g. by amide).
+  // Covers primary, secondary, and tertiary amines.
+  for (let i = 0; i < atoms.length; i++) {
+    if (elem(i) !== 'N') continue;
+    if (aromaticAtoms.has(i)) continue;
+    const ns = neighbors[i];
+    if (ns.some((n) => n.order >= 2)) continue;
+    // Must have at least one C neighbor; show all bonds at this N that aren't claimed.
+    if (!ns.some((n) => elem(n.atom) === 'C')) continue;
+    const fresh = ns.filter((n) => !claimedBonds.has(n.bondIdx));
+    if (fresh.length === 0) continue;
+    for (const n of fresh) {
+      const lbl = elem(n.atom) === 'H' ? 'N–H' : 'N–C';
+      addLength(n.bondIdx, GROUP_COLORS.amine, lbl, 'amine');
+    }
+    // One representative angle around the N
+    if (ns.length >= 2) {
+      addAngle([ns[0].atom, i, ns[1].atom], GROUP_COLORS.amine, '∠ amine', 'amine');
+    }
+  }
+
+  // 14. Halide C–X
+  for (let i = 0; i < bonds.length; i++) {
+    const b = bonds[i];
+    if (b.order !== 1) continue;
+    const a = elem(b.a), c = elem(b.b);
+    if (a === 'C' && HALIDES.has(c)) addLength(i, GROUP_COLORS.halide, `C–${c}`, 'halide');
+    else if (c === 'C' && HALIDES.has(a)) addLength(i, GROUP_COLORS.halide, `C–${a}`, 'halide');
+  }
+
+  // 15. Alkene C=C (non-aromatic)
+  for (let i = 0; i < bonds.length; i++) {
+    const b = bonds[i];
+    if (b.order !== 2 || elem(b.a) !== 'C' || elem(b.b) !== 'C') continue;
+    if (aromaticAtoms.has(b.a) && aromaticAtoms.has(b.b)) continue;
+    if (claimedBonds.has(i)) continue;
+    addLength(i, GROUP_COLORS.alkene, 'C=C', 'alkene');
+  }
+
+  // 16. Alkyne C≡C
+  for (let i = 0; i < bonds.length; i++) {
+    const b = bonds[i];
+    if (b.order !== 3 || elem(b.a) !== 'C' || elem(b.b) !== 'C') continue;
+    addLength(i, GROUP_COLORS.alkyne, 'C≡C', 'alkyne');
   }
 
   return { lengths, angles };
-}
-
-function canonicalAngleKey(triple) {
-  const [a, b, c] = triple;
-  // Center atom is fixed (b); the two outer atoms are interchangeable.
-  const lo = Math.min(a, c);
-  const hi = Math.max(a, c);
-  return `${b}|${lo}-${hi}`;
 }
