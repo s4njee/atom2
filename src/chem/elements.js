@@ -1,7 +1,7 @@
 // CPK colors as 0xRRGGBB integers (Three.js color format)
 export const CPK_COLORS = {
   H:  0xffffff,
-  C:  0x222222,
+  C:  0x909090,
   N:  0x3050f8,
   O:  0xff0d0d,
   F:  0x90e050,
