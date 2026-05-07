@@ -11,7 +11,6 @@ let bloomPass = null;
 function ensureMaterials() {
   if (atomMaterial) return;
   atomMaterial = new THREE.MeshStandardMaterial({
-    vertexColors: true,
     metalness: 0.2,
     roughness: 0.35,
   });
@@ -20,7 +19,7 @@ function ensureMaterials() {
     shader.fragmentShader = shader.fragmentShader.replace(
       '#include <emissivemap_fragment>',
       `#include <emissivemap_fragment>
-       #ifdef USE_COLOR
+       #ifdef USE_INSTANCING_COLOR
          totalEmissiveRadiance += vColor * 0.9;
        #endif`
     );

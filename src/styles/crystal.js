@@ -36,7 +36,6 @@ function ensureGrid() {
 function ensureMaterials() {
   if (atomMaterial) return;
   atomMaterial = new THREE.MeshPhysicalMaterial({
-    vertexColors: true,
     transmission: 0.85,
     thickness: 0.6,
     ior: 1.5,

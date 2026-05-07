@@ -18,7 +18,7 @@ function ensureGradient() {
 function ensureMaterials() {
   if (atomMaterial) return;
   const grad = ensureGradient();
-  atomMaterial = new THREE.MeshToonMaterial({ vertexColors: true, gradientMap: grad });
+  atomMaterial = new THREE.MeshToonMaterial({ gradientMap: grad });
   bondMaterial = new THREE.MeshToonMaterial({ color: 0x444444, gradientMap: grad });
   ringMaterial = new THREE.MeshToonMaterial({ color: 0x222222, gradientMap: grad });
 }

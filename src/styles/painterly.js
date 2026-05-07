@@ -26,7 +26,6 @@ function ensurePaper() {
 function ensureMaterials() {
   if (atomMaterial) return;
   atomMaterial = new THREE.MeshStandardMaterial({
-    vertexColors: true,
     roughness: 0.9,
     metalness: 0.0,
     flatShading: false,
