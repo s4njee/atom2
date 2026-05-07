@@ -60,6 +60,35 @@ export const ATOMIC_NUMBERS = {
   K: 19, Ca: 20, Fe: 26, Cu: 29, Zn: 30, Br: 35, I: 53,
 };
 
+// Ground-state electron configurations using Unicode superscripts.
+export const ELECTRON_CONFIGS = {
+  H:  '1s¹',
+  He: '1s²',
+  Li: '1s² 2s¹',
+  Be: '1s² 2s²',
+  B:  '1s² 2s² 2p¹',
+  C:  '1s² 2s² 2p²',
+  N:  '1s² 2s² 2p³',
+  O:  '1s² 2s² 2p⁴',
+  F:  '1s² 2s² 2p⁵',
+  Ne: '1s² 2s² 2p⁶',
+  Na: '[Ne] 3s¹',
+  Mg: '[Ne] 3s²',
+  Al: '[Ne] 3s² 3p¹',
+  Si: '[Ne] 3s² 3p²',
+  P:  '[Ne] 3s² 3p³',
+  S:  '[Ne] 3s² 3p⁴',
+  Cl: '[Ne] 3s² 3p⁵',
+  Ar: '[Ne] 3s² 3p⁶',
+  K:  '[Ar] 4s¹',
+  Ca: '[Ar] 4s²',
+  Fe: '[Ar] 3d⁶ 4s²',
+  Cu: '[Ar] 3d¹⁰ 4s¹',
+  Zn: '[Ar] 3d¹⁰ 4s²',
+  Br: '[Ar] 3d¹⁰ 4s² 4p⁵',
+  I:  '[Kr] 4d¹⁰ 5s² 5p⁵',
+};
+
 export function getColor(element) {
   return CPK_COLORS[element] ?? CPK_COLORS.default;
 }
@@ -74,4 +103,8 @@ export function getName(element) {
 
 export function getAtomicNumber(element) {
   return ATOMIC_NUMBERS[element] ?? null;
+}
+
+export function getElectronConfig(element) {
+  return ELECTRON_CONFIGS[element] ?? null;
 }
