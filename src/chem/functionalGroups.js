@@ -38,24 +38,49 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     neighbors[b.b].push({ atom: b.a, order: b.order, bondIdx: i });
   }
 
-  const lengths = []; // { bondIdx, color, prefix, group }
-  const angles = [];  // { triple: [i,j,k], color, prefix, group }
+  const lengths = []; // { bondIdx, color, prefix, group, instanceId }
+  const angles = [];  // { triple: [i,j,k], color, prefix, group, instanceId }
+  const instances = []; // { id, group, color, atomIndices: Set<number>, bondIndices: Set<number> }
   const claimedBonds = new Set();
   const claimedCarbonyls = new Set(); // C atom indices already in a higher-priority group
   const seenLength = new Set();
   const seenAngle = new Set();
 
+  let currentInstance = null;
+  function startInstance(group) {
+    currentInstance = {
+      id: instances.length,
+      group,
+      color: GROUP_COLORS[group],
+      atomIndices: new Set(),
+      bondIndices: new Set(),
+    };
+    instances.push(currentInstance);
+    return currentInstance;
+  }
+
   function addLength(bondIdx, color, prefix, group) {
     if (seenLength.has(bondIdx)) return;
     seenLength.add(bondIdx);
     claimedBonds.add(bondIdx);
-    lengths.push({ bondIdx, color, prefix, group });
+    const instanceId = currentInstance ? currentInstance.id : -1;
+    lengths.push({ bondIdx, color, prefix, group, instanceId });
+    if (currentInstance) {
+      currentInstance.bondIndices.add(bondIdx);
+      const b = bonds[bondIdx];
+      currentInstance.atomIndices.add(b.a);
+      currentInstance.atomIndices.add(b.b);
+    }
   }
   function addAngle(triple, color, prefix, group) {
     const key = `${triple[1]}|${Math.min(triple[0], triple[2])}-${Math.max(triple[0], triple[2])}`;
     if (seenAngle.has(key)) return;
     seenAngle.add(key);
-    angles.push({ triple, color, prefix, group });
+    const instanceId = currentInstance ? currentInstance.id : -1;
+    angles.push({ triple, color, prefix, group, instanceId });
+    if (currentInstance) {
+      for (const idx of triple) currentInstance.atomIndices.add(idx);
+    }
   }
 
   // Helpers
@@ -75,6 +100,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (aromaticAtoms.has(cIdx)) continue;
     const nN = neighbors[cIdx].find((n) => n.atom !== oIdx && elem(n.atom) === 'N' && n.order === 1);
     if (!nN) continue;
+    startInstance('amide');
     addLength(coBond, GROUP_COLORS.amide, 'amide C=O', 'amide');
     addLength(nN.bondIdx, GROUP_COLORS.amide, 'amide C–N', 'amide');
     addAngle([oIdx, cIdx, nN.atom], GROUP_COLORS.amide, '∠', 'amide');
@@ -90,6 +116,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
       return neighbors[n.atom].some((nn) => elem(nn.atom) === 'H');
     });
     if (!ohN) continue;
+    startInstance('carboxyl');
     addLength(coBond, GROUP_COLORS.carboxyl, 'COOH C=O', 'carboxyl');
     addLength(ohN.bondIdx, GROUP_COLORS.carboxyl, 'COOH C–O', 'carboxyl');
     const ohHydrogen = neighbors[ohN.atom].find((nn) => elem(nn.atom) === 'H');
@@ -113,6 +140,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
       return !hasHydrogen && otherCarbon;
     });
     if (!oN) continue;
+    startInstance('ester');
     addLength(coBond, GROUP_COLORS.ester, 'ester C=O', 'ester');
     addLength(oN.bondIdx, GROUP_COLORS.ester, 'ester C–O', 'ester');
     addAngle([oIdx, cIdx, oN.atom], GROUP_COLORS.ester, '∠', 'ester');
@@ -123,6 +151,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
   for (const [cIdx, { oIdx, bondIdx: coBond }] of carbonylAtCarbon) {
     if (claimedCarbonyls.has(cIdx)) continue;
     if (aromaticAtoms.has(cIdx)) continue;
+    startInstance('carbonyl');
     addLength(coBond, GROUP_COLORS.carbonyl, 'C=O', 'carbonyl');
     const others = neighbors[cIdx].filter((n) => n.atom !== oIdx).slice(0, 2);
     for (const n of others) {
@@ -136,6 +165,8 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (elem(i) !== 'N') continue;
     const oxygens = neighbors[i].filter((n) => elem(n.atom) === 'O');
     if (oxygens.length < 2) continue;
+    startInstance('nitro');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     for (const o of oxygens) addLength(o.bondIdx, GROUP_COLORS.nitro, 'NO₂', 'nitro');
     addAngle([oxygens[0].atom, i, oxygens[1].atom], GROUP_COLORS.nitro, '∠', 'nitro');
   }
@@ -145,6 +176,8 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (elem(i) !== 'S') continue;
     const dblO = neighbors[i].filter((n) => elem(n.atom) === 'O' && n.order >= 2);
     if (dblO.length < 2) continue;
+    startInstance('sulfonyl');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     for (const o of dblO) addLength(o.bondIdx, GROUP_COLORS.sulfonyl, 'SO₂', 'sulfonyl');
     addAngle([dblO[0].atom, i, dblO[1].atom], GROUP_COLORS.sulfonyl, '∠', 'sulfonyl');
   }
@@ -153,6 +186,9 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
   for (let i = 0; i < atoms.length; i++) {
     if (elem(i) !== 'P') continue;
     const os = neighbors[i].filter((n) => elem(n.atom) === 'O');
+    if (os.length === 0) continue;
+    startInstance('phosphate');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     for (const o of os) addLength(o.bondIdx, GROUP_COLORS.phosphate, 'P–O', 'phosphate');
   }
 
@@ -166,6 +202,8 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     const heavyN = ns.find((n) => elem(n.atom) !== 'H' && n.order === 1);
     if (!hN || !heavyN) continue;
     if (claimedBonds.has(hN.bondIdx)) continue; // already in carboxyl
+    startInstance('hydroxyl');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     addLength(hN.bondIdx, GROUP_COLORS.hydroxyl, 'O–H', 'hydroxyl');
     addAngle([heavyN.atom, i, hN.atom], GROUP_COLORS.hydroxyl, '∠', 'hydroxyl');
   }
@@ -179,6 +217,8 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (ns.some((n) => n.order >= 2 || elem(n.atom) === 'H')) continue;
     // Exclude if part of an ester / carboxyl already claimed
     if (ns.every((n) => claimedBonds.has(n.bondIdx))) continue;
+    startInstance('ether');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     addAngle([ns[0].atom, i, ns[1].atom], GROUP_COLORS.ether, '∠ ether', 'ether');
     for (const n of ns) {
       if (!claimedBonds.has(n.bondIdx)) addLength(n.bondIdx, GROUP_COLORS.ether, 'ether C–O', 'ether');
@@ -191,6 +231,8 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     const ns = neighbors[i];
     const hN = ns.find((n) => elem(n.atom) === 'H' && n.order === 1);
     if (!hN) continue;
+    startInstance('thiol');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     addLength(hN.bondIdx, GROUP_COLORS.thiol, 'S–H', 'thiol');
   }
 
@@ -201,6 +243,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     const isCN = (elem(b.a) === 'C' && elem(b.b) === 'N') || (elem(b.a) === 'N' && elem(b.b) === 'C');
     if (!isCN) continue;
     if (aromaticAtoms.has(b.a) || aromaticAtoms.has(b.b)) continue;
+    startInstance('imine');
     addLength(i, GROUP_COLORS.imine, 'C=N', 'imine');
   }
 
@@ -209,6 +252,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     const b = bonds[i];
     if (b.order !== 3) continue;
     if ((elem(b.a) === 'C' && elem(b.b) === 'N') || (elem(b.a) === 'N' && elem(b.b) === 'C')) {
+      startInstance('nitrile');
       addLength(i, GROUP_COLORS.nitrile, 'C≡N', 'nitrile');
     }
   }
@@ -224,6 +268,8 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (!ns.some((n) => elem(n.atom) === 'C')) continue;
     const fresh = ns.filter((n) => !claimedBonds.has(n.bondIdx));
     if (fresh.length === 0) continue;
+    startInstance('amine');
+    if (currentInstance) currentInstance.atomIndices.add(i);
     for (const n of fresh) {
       const lbl = elem(n.atom) === 'H' ? 'N–H' : 'N–C';
       addLength(n.bondIdx, GROUP_COLORS.amine, lbl, 'amine');
@@ -239,8 +285,13 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     const b = bonds[i];
     if (b.order !== 1) continue;
     const a = elem(b.a), c = elem(b.b);
-    if (a === 'C' && HALIDES.has(c)) addLength(i, GROUP_COLORS.halide, `C–${c}`, 'halide');
-    else if (c === 'C' && HALIDES.has(a)) addLength(i, GROUP_COLORS.halide, `C–${a}`, 'halide');
+    if (a === 'C' && HALIDES.has(c)) {
+      startInstance('halide');
+      addLength(i, GROUP_COLORS.halide, `C–${c}`, 'halide');
+    } else if (c === 'C' && HALIDES.has(a)) {
+      startInstance('halide');
+      addLength(i, GROUP_COLORS.halide, `C–${a}`, 'halide');
+    }
   }
 
   // 15. Alkene C=C (non-aromatic)
@@ -249,6 +300,7 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (b.order !== 2 || elem(b.a) !== 'C' || elem(b.b) !== 'C') continue;
     if (aromaticAtoms.has(b.a) && aromaticAtoms.has(b.b)) continue;
     if (claimedBonds.has(i)) continue;
+    startInstance('alkene');
     addLength(i, GROUP_COLORS.alkene, 'C=C', 'alkene');
   }
 
@@ -256,8 +308,9 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
   for (let i = 0; i < bonds.length; i++) {
     const b = bonds[i];
     if (b.order !== 3 || elem(b.a) !== 'C' || elem(b.b) !== 'C') continue;
+    startInstance('alkyne');
     addLength(i, GROUP_COLORS.alkyne, 'C≡C', 'alkyne');
   }
 
-  return { lengths, angles };
+  return { lengths, angles, instances };
 }

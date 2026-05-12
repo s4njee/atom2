@@ -11,6 +11,7 @@ import { createSidebar } from './ui/sidebar.js';
 import { createStatusBar } from './ui/statusBar.js';
 import { createAtomTooltip } from './ui/atomTooltip.js';
 import { createMeasurementToggles } from './ui/measurementToggles.js';
+import { createGroupsPanel } from './ui/groupsPanel.js';
 import { buildLengthLabels, buildAngleArcs, disposeMeasurementGroup } from './scene/measurements.js';
 import { detectFunctionalGroups } from './chem/functionalGroups.js';
 import { createStore } from './state/store.js';
@@ -65,13 +66,18 @@ export function startApp() {
     onChange: (id) => switchStyle(id),
   });
 
-  const sidebar = createSidebar(document.getElementById('sidebar'), {
+  const sidebar = createSidebar(document.getElementById('sidebar-lists'), {
     onPick: (entry) => loadCID(entry.cid, entry.name),
   });
 
   let measureState = { lengths: false, angles: false };
+  let focusedGroup = null;
   let lengthsGroup = null;
   let anglesGroup = null;
+
+  const groupsPanel = createGroupsPanel(document.getElementById('groups-container'), {
+    onFocusChange: (g) => { focusedGroup = g; refreshMeasurements(); },
+  });
 
   function clearMeasurements() {
     if (lengthsGroup) { viewer.scene.remove(lengthsGroup); disposeMeasurementGroup(lengthsGroup); lengthsGroup = null; }
@@ -83,12 +89,20 @@ export function startApp() {
     const molecule = store.get().molecule;
     if (!molecule) return;
     const groups = detectFunctionalGroups(molecule, molecule.aromaticRings);
-    if (measureState.lengths && groups.lengths.length > 0) {
-      lengthsGroup = buildLengthLabels(molecule, groups.lengths);
+    const filter = focusedGroup
+      ? (item) => item.group === focusedGroup
+      : () => true;
+    // When a group is focused, show both its lengths and angles regardless of topbar toggles.
+    const showLengths = focusedGroup ? true : measureState.lengths;
+    const showAngles = focusedGroup ? true : measureState.angles;
+    const lengthItems = groups.lengths.filter(filter);
+    const angleItems = groups.angles.filter(filter);
+    if (showLengths && lengthItems.length > 0) {
+      lengthsGroup = buildLengthLabels(molecule, lengthItems);
       viewer.scene.add(lengthsGroup);
     }
-    if (measureState.angles && groups.angles.length > 0) {
-      anglesGroup = buildAngleArcs(molecule, groups.angles);
+    if (showAngles && angleItems.length > 0) {
+      anglesGroup = buildAngleArcs(molecule, angleItems);
       viewer.scene.add(anglesGroup);
     }
   }
@@ -131,6 +145,8 @@ export function startApp() {
       activeStyle.onMoleculeChanged(viewer, meshes);
       fitCamera(viewer, meshes);
       store.set({ molecule: data, meshes });
+      const detected = detectFunctionalGroups(data, data.aromaticRings);
+      groupsPanel.setInstances(detected.instances);
       refreshMeasurements();
       addRecent({ cid, name: data.name });
       sidebar.refresh();
