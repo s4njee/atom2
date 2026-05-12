@@ -13,6 +13,7 @@ import { createAtomTooltip } from './ui/atomTooltip.js';
 import { createMeasurementToggles } from './ui/measurementToggles.js';
 import { createGroupsPanel } from './ui/groupsPanel.js';
 import { buildLengthLabels, buildAngleArcs, disposeMeasurementGroup } from './scene/measurements.js';
+import { applyGroupColors } from './scene/groupColors.js';
 import { detectFunctionalGroups } from './chem/functionalGroups.js';
 import { createStore } from './state/store.js';
 import { readURLState, writeURLState } from './state/url.js';
@@ -76,7 +77,15 @@ export function startApp() {
   let anglesGroup = null;
 
   const groupsPanel = createGroupsPanel(document.getElementById('groups-container'), {
-    onFocusChange: (g) => { focusedGroup = g; refreshMeasurements(); },
+    onFocusChange: (g) => {
+      focusedGroup = g;
+      const { molecule, meshes } = store.get();
+      if (molecule && meshes) {
+        const detected = detectFunctionalGroups(molecule, molecule.aromaticRings);
+        applyGroupColors(meshes, molecule, detected.instances, focusedGroup);
+      }
+      refreshMeasurements();
+    },
   });
 
   function clearMeasurements() {
@@ -146,6 +155,7 @@ export function startApp() {
       fitCamera(viewer, meshes);
       store.set({ molecule: data, meshes });
       const detected = detectFunctionalGroups(data, data.aromaticRings);
+      applyGroupColors(meshes, data, detected.instances, focusedGroup);
       groupsPanel.setInstances(detected.instances);
       refreshMeasurements();
       addRecent({ cid, name: data.name });
