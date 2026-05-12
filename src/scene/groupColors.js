@@ -11,23 +11,24 @@ function bondInstanceCount(order) {
 
 const WHITE = new THREE.Color(1, 1, 1);
 
-// Paint atom and bond instance colors based on detected functional-group instances.
-// - When `focusedGroup` is null, every group's atoms/bonds get its palette color.
+// Paint atom and bond instance colors based on the selected functional group.
+// - When `focusedGroup` is null, nothing is tinted: atoms revert to CPK and bonds
+//   are reset to neutral white so the active style's material color shows through.
 // - When `focusedGroup` is set, only that group is colored; everything else reverts.
-// Atoms not in any (active) group fall back to CPK; bonds not in any (active) group
-// stay neutral white so the active style's material color shows through.
 export function applyGroupColors(meshes, molecule, instances, focusedGroup = null) {
   const { atoms, bonds } = molecule;
 
   const atomGroup = new Map();
   const bondGroup = new Map();
-  for (const inst of instances) {
-    if (focusedGroup && inst.group !== focusedGroup) continue;
-    for (const a of inst.atomIndices) {
-      if (!atomGroup.has(a)) atomGroup.set(a, inst.group);
-    }
-    for (const b of inst.bondIndices) {
-      if (!bondGroup.has(b)) bondGroup.set(b, inst.group);
+  if (focusedGroup) {
+    for (const inst of instances) {
+      if (inst.group !== focusedGroup) continue;
+      for (const a of inst.atomIndices) {
+        if (!atomGroup.has(a)) atomGroup.set(a, inst.group);
+      }
+      for (const b of inst.bondIndices) {
+        if (!bondGroup.has(b)) bondGroup.set(b, inst.group);
+      }
     }
   }
 
