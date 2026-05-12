@@ -14,6 +14,7 @@ export function parseInputToCID(input) {
 export function createPubChemClient() {
   const cache = new Map(); // cid → MoleculeData
   const propsCache = new Map(); // cid → properties object
+  const similarCache = new Map(); // cid → CID[]
 
   async function suggest(query) {
     const q = query.trim();
@@ -79,5 +80,21 @@ export function createPubChemClient() {
     return data;
   }
 
-  return { suggest, resolveQuery, fetchMolecule, fetchProperties };
+  async function fetchSimilar(cid, { threshold = 90, maxRecords = 8 } = {}) {
+    const key = `${cid}:${threshold}:${maxRecords}`;
+    if (similarCache.has(key)) return similarCache.get(key);
+    const url = `${BASE}/rest/pug/compound/fastsimilarity_2d/cid/${cid}/cids/JSON?Threshold=${threshold}&MaxRecords=${maxRecords + 1}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Similarity unavailable for CID ${cid}`);
+    const json = await res.json();
+    const cids = (json?.IdentifierList?.CID ?? []).filter((c) => c !== cid).slice(0, maxRecords);
+    similarCache.set(key, cids);
+    return cids;
+  }
+
+  function thumbnailURL(cid, size = 'small') {
+    return `${BASE}/rest/pug/compound/cid/${cid}/PNG?image_size=${size}`;
+  }
+
+  return { suggest, resolveQuery, fetchMolecule, fetchProperties, fetchSimilar, thumbnailURL };
 }

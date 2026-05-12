@@ -14,6 +14,7 @@ import { createMeasurementToggles } from './ui/measurementToggles.js';
 import { createGroupsPanel } from './ui/groupsPanel.js';
 import { createRandomButton } from './ui/randomButton.js';
 import { createInfoCard } from './ui/infoCard.js';
+import { createRelatedStrip } from './ui/relatedStrip.js';
 import { buildLengthLabels, buildAngleArcs, disposeMeasurementGroup } from './scene/measurements.js';
 import { applyGroupColors } from './scene/groupColors.js';
 import { detectFunctionalGroups } from './chem/functionalGroups.js';
@@ -30,6 +31,10 @@ export function startApp() {
   const status = createStatusBar(document.getElementById('status'));
   const tooltip = createAtomTooltip(canvasContainer);
   const infoCard = createInfoCard(canvasContainer);
+  const relatedStrip = createRelatedStrip(canvasContainer, {
+    onPick: (cid) => loadCID(cid, String(cid)),
+    thumbnailURL: (cid) => client.thumbnailURL(cid),
+  });
 
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -165,9 +170,14 @@ export function startApp() {
     sidebar.refresh();
     writeURLState({ cid: data.cid, style: activeStyle.id });
 
-    // Fetch and show the property card. Best-effort; failures hide the card.
+    // Fetch and show the property card + related compounds. Best-effort.
     infoCard.show({ cid: data.cid, title: data.name });
+    relatedStrip.hide();
     const requestedCid = data.cid;
+    client.fetchSimilar(data.cid).then((cids) => {
+      if (store.get().molecule?.cid !== requestedCid) return;
+      relatedStrip.show(cids);
+    }).catch(() => { /* no similar compounds — skip */ });
     client.fetchProperties(data.cid).then((props) => {
       // Only apply if the molecule didn't change while we were fetching.
       if (store.get().molecule?.cid !== requestedCid) return;

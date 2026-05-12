@@ -101,6 +101,54 @@ html, body {
 .info-card-inchi:hover { color: var(--accent); }
 .info-card-inchi:empty { display: none; }
 
+/* Related compounds strip */
+.related-strip {
+  position: absolute;
+  right: 16px;
+  bottom: 16px;
+  max-width: calc(100% - 420px);
+  padding: 8px 10px;
+  background: rgba(14, 17, 22, 0.78);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.related-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+.related-row {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+.related-thumb {
+  flex: 0 0 auto;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: transform 100ms ease, border-color 100ms ease;
+}
+.related-thumb:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent-strong);
+}
+.related-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
 #sidebar {
   grid-area: side;
   padding: 12px;
