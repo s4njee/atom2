@@ -1,0 +1,66 @@
+export const COLLECTIONS = [
+  {
+    id: 'drugs',
+    title: 'Common drugs',
+    entries: [
+      { cid: 2244, name: 'Aspirin' },
+      { cid: 1983, name: 'Acetaminophen' },
+      { cid: 3672, name: 'Ibuprofen' },
+      { cid: 2519, name: 'Caffeine' },
+      { cid: 5564, name: 'Sildenafil' },
+      { cid: 4594, name: 'Penicillin G' },
+    ],
+  },
+  {
+    id: 'amino-acids',
+    title: 'Amino acids',
+    entries: [
+      { cid: 750, name: 'Glycine' },
+      { cid: 5950, name: 'Alanine' },
+      { cid: 6322, name: 'Valine' },
+      { cid: 6106, name: 'Leucine' },
+      { cid: 5951, name: 'Serine' },
+      { cid: 6305, name: 'Tryptophan' },
+      { cid: 6057, name: 'Tyrosine' },
+      { cid: 6140, name: 'Phenylalanine' },
+    ],
+  },
+  {
+    id: 'sugars',
+    title: 'Sugars',
+    entries: [
+      { cid: 5793, name: 'Glucose' },
+      { cid: 2723872, name: 'Fructose' },
+      { cid: 5988, name: 'Sucrose' },
+      { cid: 6134, name: 'Lactose' },
+      { cid: 439186, name: 'Ribose' },
+    ],
+  },
+  {
+    id: 'solvents',
+    title: 'Solvents',
+    entries: [
+      { cid: 962, name: 'Water' },
+      { cid: 702, name: 'Ethanol' },
+      { cid: 887, name: 'Methanol' },
+      { cid: 180, name: 'Acetone' },
+      { cid: 241, name: 'Benzene' },
+      { cid: 679, name: 'DMSO' },
+      { cid: 6212, name: 'Chloroform' },
+    ],
+  },
+  {
+    id: 'biomolecules',
+    title: 'Biomolecules',
+    entries: [
+      { cid: 190, name: 'Adenine' },
+      { cid: 597, name: 'Cytosine' },
+      { cid: 1135, name: 'Thymine' },
+      { cid: 135398634, name: 'Guanine' },
+      { cid: 1174, name: 'Uracil' },
+      { cid: 5997, name: 'Cholesterol' },
+      { cid: 54670067, name: 'Vitamin C' },
+      { cid: 681, name: 'Dopamine' },
+    ],
+  },
+];

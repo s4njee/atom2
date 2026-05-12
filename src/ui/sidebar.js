@@ -1,52 +1,87 @@
 import { getRecents, getFavorites, toggleFavorite, isFavorite } from '../state/storage.js';
+import { COLLECTIONS } from '../data/collections.js';
+
+const COLLAPSED_KEY = 'atom2:collections:collapsed';
+
+function readCollapsed() {
+  try { return new Set(JSON.parse(window.localStorage.getItem(COLLAPSED_KEY) || '[]')); }
+  catch { return new Set(); }
+}
+function writeCollapsed(set) {
+  window.localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...set]));
+}
 
 export function createSidebar(container, { onPick }) {
   container.innerHTML = '';
+  const collapsed = readCollapsed();
 
-  function section(title) {
-    const h = document.createElement('h3');
-    h.textContent = title;
-    h.style.margin = '12px 0 6px';
-    h.style.fontSize = '13px';
-    h.style.textTransform = 'uppercase';
-    h.style.color = '#8a93a3';
-    h.style.letterSpacing = '0.05em';
-    container.appendChild(h);
+  function makeList() {
     const ul = document.createElement('ul');
-    ul.style.listStyle = 'none';
-    ul.style.padding = '0';
-    ul.style.margin = '0';
+    ul.className = 'sidebar-list';
+    return ul;
+  }
+
+  function staticSection(title) {
+    const h = document.createElement('h3');
+    h.className = 'sidebar-heading';
+    h.textContent = title;
+    container.appendChild(h);
+    const ul = makeList();
     container.appendChild(ul);
     return ul;
   }
 
-  const favList = section('Favorites');
-  const recentList = section('Recent');
+  function collapsibleSection(id, title) {
+    const h = document.createElement('button');
+    h.className = 'sidebar-heading sidebar-heading-collapsible';
+    h.type = 'button';
+    const caret = document.createElement('span');
+    caret.className = 'sidebar-caret';
+    const label = document.createElement('span');
+    label.textContent = title;
+    h.appendChild(caret);
+    h.appendChild(label);
+    container.appendChild(h);
+    const ul = makeList();
+    container.appendChild(ul);
+
+    function applyState() {
+      const isCollapsed = collapsed.has(id);
+      ul.style.display = isCollapsed ? 'none' : '';
+      caret.textContent = isCollapsed ? '▸' : '▾';
+    }
+    h.addEventListener('click', () => {
+      if (collapsed.has(id)) collapsed.delete(id);
+      else collapsed.add(id);
+      writeCollapsed(collapsed);
+      applyState();
+    });
+    applyState();
+    return ul;
+  }
+
+  const favList = staticSection('Favorites');
+  const recentList = staticSection('Recent');
+
+  const collectionLists = COLLECTIONS.map((c) => ({
+    collection: c,
+    ul: collapsibleSection(`collection:${c.id}`, c.title),
+  }));
 
   function makeItem(entry, { showStar }) {
     const li = document.createElement('li');
-    li.style.display = 'flex';
-    li.style.alignItems = 'center';
-    li.style.justifyContent = 'space-between';
-    li.style.padding = '4px 0';
+    li.className = 'sidebar-item';
     const name = document.createElement('button');
+    name.className = 'sidebar-item-name';
     name.textContent = `${entry.name} (${entry.cid})`;
-    name.style.background = 'none';
-    name.style.border = 'none';
-    name.style.cursor = 'pointer';
-    name.style.font = 'inherit';
-    name.style.padding = '0';
-    name.style.color = '#79c0ff';
     name.addEventListener('click', () => onPick(entry));
     li.appendChild(name);
     if (showStar) {
       const star = document.createElement('button');
-      star.textContent = isFavorite(entry.cid) ? '★' : '☆';
-      star.style.background = 'none';
-      star.style.border = 'none';
-      star.style.cursor = 'pointer';
-      star.style.fontSize = '14px';
-      star.style.color = isFavorite(entry.cid) ? '#f1c40f' : '#8a93a3';
+      star.className = 'sidebar-item-star';
+      const favorited = isFavorite(entry.cid);
+      star.textContent = favorited ? '★' : '☆';
+      if (favorited) star.classList.add('is-fav');
       star.addEventListener('click', () => {
         toggleFavorite(entry);
         refresh();
@@ -61,6 +96,10 @@ export function createSidebar(container, { onPick }) {
     for (const e of getFavorites()) favList.appendChild(makeItem(e, { showStar: true }));
     recentList.innerHTML = '';
     for (const e of getRecents()) recentList.appendChild(makeItem(e, { showStar: true }));
+    for (const { collection, ul } of collectionLists) {
+      ul.innerHTML = '';
+      for (const e of collection.entries) ul.appendChild(makeItem(e, { showStar: true }));
+    }
   }
 
   refresh();
