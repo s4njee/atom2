@@ -56,6 +56,51 @@ html, body {
   color: var(--accent);
 }
 
+/* Molecule info card on the canvas */
+.info-card {
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  max-width: 360px;
+  padding: 10px 12px;
+  background: rgba(14, 17, 22, 0.78);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.4;
+  pointer-events: auto;
+}
+.info-card-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  text-transform: capitalize;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.info-card-meta {
+  margin-top: 2px;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+.info-card-inchi {
+  margin-top: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  cursor: pointer;
+  user-select: all;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.info-card-inchi:hover { color: var(--accent); }
+.info-card-inchi:empty { display: none; }
+
 #sidebar {
   grid-area: side;
   padding: 12px;

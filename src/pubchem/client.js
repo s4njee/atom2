@@ -13,6 +13,7 @@ export function parseInputToCID(input) {
 
 export function createPubChemClient() {
   const cache = new Map(); // cid → MoleculeData
+  const propsCache = new Map(); // cid → properties object
 
   async function suggest(query) {
     const q = query.trim();
@@ -59,5 +60,24 @@ export function createPubChemClient() {
     return data;
   }
 
-  return { suggest, resolveQuery, fetchMolecule };
+  async function fetchProperties(cid) {
+    if (propsCache.has(cid)) return propsCache.get(cid);
+    const props = 'Title,MolecularFormula,MolecularWeight,InChIKey';
+    const url = `${BASE}/rest/pug/compound/cid/${cid}/property/${props}/JSON`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Properties unavailable for CID ${cid}`);
+    const json = await res.json();
+    const row = json?.PropertyTable?.Properties?.[0] ?? {};
+    const data = {
+      cid,
+      title: row.Title ?? null,
+      formula: row.MolecularFormula ?? null,
+      weight: row.MolecularWeight != null ? Number(row.MolecularWeight) : null,
+      inchiKey: row.InChIKey ?? null,
+    };
+    propsCache.set(cid, data);
+    return data;
+  }
+
+  return { suggest, resolveQuery, fetchMolecule, fetchProperties };
 }

@@ -13,6 +13,7 @@ import { createAtomTooltip } from './ui/atomTooltip.js';
 import { createMeasurementToggles } from './ui/measurementToggles.js';
 import { createGroupsPanel } from './ui/groupsPanel.js';
 import { createRandomButton } from './ui/randomButton.js';
+import { createInfoCard } from './ui/infoCard.js';
 import { buildLengthLabels, buildAngleArcs, disposeMeasurementGroup } from './scene/measurements.js';
 import { applyGroupColors } from './scene/groupColors.js';
 import { detectFunctionalGroups } from './chem/functionalGroups.js';
@@ -28,6 +29,7 @@ export function startApp() {
   const client = createPubChemClient();
   const status = createStatusBar(document.getElementById('status'));
   const tooltip = createAtomTooltip(canvasContainer);
+  const infoCard = createInfoCard(canvasContainer);
 
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
@@ -162,6 +164,23 @@ export function startApp() {
     addRecent({ cid: data.cid, name: data.name });
     sidebar.refresh();
     writeURLState({ cid: data.cid, style: activeStyle.id });
+
+    // Fetch and show the property card. Best-effort; failures hide the card.
+    infoCard.show({ cid: data.cid, title: data.name });
+    const requestedCid = data.cid;
+    client.fetchProperties(data.cid).then((props) => {
+      // Only apply if the molecule didn't change while we were fetching.
+      if (store.get().molecule?.cid !== requestedCid) return;
+      // If we got a Title from PubChem, update the recents/sidebar entry with the real name.
+      if (props.title && props.title !== data.name && data.name === String(data.cid)) {
+        data.name = props.title;
+        addRecent({ cid: data.cid, name: props.title });
+        sidebar.refresh();
+      }
+      infoCard.show({ ...props, title: props.title || data.name });
+    }).catch(() => {
+      // Keep the title-only card on failure.
+    });
   }
 
   async function loadCID(cid, name) {
