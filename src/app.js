@@ -56,7 +56,7 @@ export function startApp() {
   const store = createStore({
     molecule: null,
     meshes: null,
-    style: initial.style ?? 'xray',
+    style: initial.style ?? 'blueprint',
   });
 
   let activeStyle = getStyle(store.get().style);
