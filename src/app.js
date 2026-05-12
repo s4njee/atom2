@@ -122,7 +122,7 @@ export function startApp() {
   });
 
   createRandomButton(document.getElementById('random-container'), {
-    onPick: (entry) => loadCID(entry.cid, entry.name),
+    onClick: () => loadRandomCID(),
   });
 
   createSearchBar(document.getElementById('search-container'), {
@@ -142,34 +142,56 @@ export function startApp() {
     }
   }
 
+  function renderMolecule(data) {
+    const old = store.get().meshes;
+    if (old) {
+      disposeMoleculeMeshes(old);
+      for (const m of [old.atoms, old.bonds, old.rings]) if (m) viewer.scene.remove(m);
+    }
+    const meshes = buildMoleculeMeshes(data, getSharedGeometry());
+    if (meshes.atoms) viewer.scene.add(meshes.atoms);
+    if (meshes.bonds) viewer.scene.add(meshes.bonds);
+    if (meshes.rings) viewer.scene.add(meshes.rings);
+    activeStyle.onMoleculeChanged(viewer, meshes);
+    fitCamera(viewer, meshes);
+    store.set({ molecule: data, meshes });
+    const detected = detectFunctionalGroups(data, data.aromaticRings);
+    applyGroupColors(meshes, data, detected.instances, focusedGroup);
+    groupsPanel.setInstances(detected.instances);
+    refreshMeasurements();
+    addRecent({ cid: data.cid, name: data.name });
+    sidebar.refresh();
+    writeURLState({ cid: data.cid, style: activeStyle.id });
+  }
+
   async function loadCID(cid, name) {
     status.set(`Loading CID ${cid}…`);
     try {
       const data = await client.fetchMolecule(cid);
       data.name = name || data.name;
-      const old = store.get().meshes;
-      if (old) {
-        disposeMoleculeMeshes(old);
-        for (const m of [old.atoms, old.bonds, old.rings]) if (m) viewer.scene.remove(m);
-      }
-      const meshes = buildMoleculeMeshes(data, getSharedGeometry());
-      if (meshes.atoms) viewer.scene.add(meshes.atoms);
-      if (meshes.bonds) viewer.scene.add(meshes.bonds);
-      if (meshes.rings) viewer.scene.add(meshes.rings);
-      activeStyle.onMoleculeChanged(viewer, meshes);
-      fitCamera(viewer, meshes);
-      store.set({ molecule: data, meshes });
-      const detected = detectFunctionalGroups(data, data.aromaticRings);
-      applyGroupColors(meshes, data, detected.instances, focusedGroup);
-      groupsPanel.setInstances(detected.instances);
-      refreshMeasurements();
-      addRecent({ cid, name: data.name });
-      sidebar.refresh();
-      writeURLState({ cid, style: activeStyle.id });
+      renderMolecule(data);
       status.set('');
     } catch (e) {
       status.set(e.message, 'error');
     }
+  }
+
+  async function loadRandomCID(maxAttempts = 12) {
+    status.set('Finding a random molecule…');
+    // PubChem CIDs 1–200,000 cover most small organics with 3D conformers.
+    const MAX_CID = 200_000;
+    for (let i = 0; i < maxAttempts; i++) {
+      const cid = 1 + Math.floor(Math.random() * MAX_CID);
+      try {
+        const data = await client.fetchMolecule(cid);
+        renderMolecule(data);
+        status.set('');
+        return;
+      } catch {
+        // Try a different CID. Most failures are "no 3D conformer" — common in PubChem.
+      }
+    }
+    status.set('Could not find a random molecule — try again', 'error');
   }
 
   function switchStyle(id) {
