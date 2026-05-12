@@ -40,6 +40,22 @@ html, body {
   border-bottom: 1px solid var(--border);
 }
 
+#random-container { margin-left: auto; }
+
+.random-btn {
+  background: #0d1117;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+.random-btn:hover {
+  border-color: var(--accent-strong);
+  color: var(--accent);
+}
+
 #sidebar {
   grid-area: side;
   padding: 12px;

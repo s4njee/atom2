@@ -12,6 +12,7 @@ import { createStatusBar } from './ui/statusBar.js';
 import { createAtomTooltip } from './ui/atomTooltip.js';
 import { createMeasurementToggles } from './ui/measurementToggles.js';
 import { createGroupsPanel } from './ui/groupsPanel.js';
+import { createRandomButton } from './ui/randomButton.js';
 import { buildLengthLabels, buildAngleArcs, disposeMeasurementGroup } from './scene/measurements.js';
 import { applyGroupColors } from './scene/groupColors.js';
 import { detectFunctionalGroups } from './chem/functionalGroups.js';
@@ -118,6 +119,10 @@ export function startApp() {
 
   createMeasurementToggles(document.getElementById('measurements-container'), {
     onChange: (s) => { measureState = s; refreshMeasurements(); },
+  });
+
+  createRandomButton(document.getElementById('random-container'), {
+    onPick: (entry) => loadCID(entry.cid, entry.name),
   });
 
   createSearchBar(document.getElementById('search-container'), {
