@@ -174,7 +174,7 @@ export function startApp() {
     infoCard.show({ cid: data.cid, title: data.name });
     relatedStrip.hide();
     const requestedCid = data.cid;
-    client.fetchSimilar(data.cid).then((cids) => {
+    client.fetchSimilar(data.cid, { maxRecords: 5 }).then((cids) => {
       if (store.get().molecule?.cid !== requestedCid) return;
       relatedStrip.show(cids);
     }).catch(() => { /* no similar compounds — skip */ });

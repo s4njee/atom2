@@ -92,7 +92,7 @@ export function createPubChemClient() {
     return cids;
   }
 
-  function thumbnailURL(cid, size = 'small') {
+  function thumbnailURL(cid, size = 'large') {
     return `${BASE}/rest/pug/compound/cid/${cid}/PNG?image_size=${size}`;
   }
 

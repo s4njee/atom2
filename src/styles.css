@@ -128,9 +128,9 @@ html, body {
 }
 .related-thumb {
   flex: 0 0 auto;
-  width: 56px;
-  height: 56px;
-  padding: 0;
+  width: 110px;
+  height: 110px;
+  padding: 4px;
   background: #ffffff;
   border: 1px solid var(--border);
   border-radius: 4px;
