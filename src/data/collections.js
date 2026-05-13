@@ -7,8 +7,8 @@ export const COLLECTIONS = [
       { cid: 1983, name: 'Acetaminophen' },
       { cid: 3672, name: 'Ibuprofen' },
       { cid: 2519, name: 'Caffeine' },
-      { cid: 5564, name: 'Sildenafil' },
-      { cid: 4594, name: 'Penicillin G' },
+      { cid: 135398744, name: 'Sildenafil' },
+      { cid: 5904, name: 'Penicillin G' },
     ],
   },
   {
@@ -17,7 +17,7 @@ export const COLLECTIONS = [
     entries: [
       { cid: 750, name: 'Glycine' },
       { cid: 5950, name: 'Alanine' },
-      { cid: 6322, name: 'Valine' },
+      { cid: 6287, name: 'Valine' },
       { cid: 6106, name: 'Leucine' },
       { cid: 5951, name: 'Serine' },
       { cid: 6305, name: 'Tryptophan' },
@@ -33,7 +33,7 @@ export const COLLECTIONS = [
       { cid: 2723872, name: 'Fructose' },
       { cid: 5988, name: 'Sucrose' },
       { cid: 6134, name: 'Lactose' },
-      { cid: 439186, name: 'Ribose' },
+      { cid: 10975657, name: 'Ribose' },
     ],
   },
   {
