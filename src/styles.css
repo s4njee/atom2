@@ -147,6 +147,8 @@ html, body {
   height: 100%;
   object-fit: contain;
   display: block;
+  transform: scale(1.5);
+  transform-origin: center;
 }
 
 #sidebar {
