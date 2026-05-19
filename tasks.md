@@ -91,12 +91,12 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 - [ ] 2–3 ink palette + paper.
 - [ ] Register + add to `STYLE_LIST`.
 
-### Stencil cutout — **S/M** ✅
-- [x] Create `src/styles/stencil.js`.
-- [x] Pure flat per-atom/bond/ring color (no lighting).
-- [x] Draw each mesh twice: offset + tinted dark for shadow, then full color on top. *(via instanced shadow meshes premultiplied with a small world-space translation)*
+### Stencil cutout — **S/M**
+- [ ] Create `src/styles/stencil.js`.
+- [ ] Pure flat per-atom/bond/ring color (no lighting).
+- [ ] Draw each mesh twice: offset + tinted dark for shadow, then full color on top. *(via instanced shadow meshes premultiplied with a small world-space translation)*
 - [ ] Palette: one shade per detected functional group.
-- [x] Register + add to `STYLE_LIST`.
+- [ ] Register + add to `STYLE_LIST`.
 
 ---
 
@@ -260,10 +260,10 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 
 These do **not** get their own arrow-key slot — they're modifiers on top of any base style.
 
-### Selective bloom — **S** ✅
-- [x] Create `src/styles/selectiveBloom.js`. *(lives at top level, not under postprocess/, since for now it's a full style in the cycle)*
-- [x] Stencil mask render of the bloom subset (halogens or hovered functional group). *(in-shader: per-fragment halogen detection by instance-color match → bright color, otherwise muted; UnrealBloom catches the brightness)*
-- [x] Reuse existing `UnrealBloomPass`; composite back.
+### Selective bloom — **S**
+- [ ] Create `src/styles/selectiveBloom.js`. *(lives at top level, not under postprocess/, since for now it's a full style in the cycle)*
+- [ ] Stencil mask render of the bloom subset (halogens or hovered functional group). *(in-shader: per-fragment halogen detection by instance-color match → bright color, otherwise muted; UnrealBloom catches the brightness)*
+- [ ] Reuse existing `UnrealBloomPass`; composite back.
 - [ ] Expose toggle (keyboard or UI) independent of the up/down arrow style cycle. *(deferred — currently reachable through the style cycle as 'Halogen glow')*
 
 ### Depth of field with bokeh — **M**
