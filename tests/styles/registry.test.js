@@ -2,26 +2,32 @@ import { describe, it, expect } from 'vitest';
 import { getStyle, STYLE_LIST, STYLES } from '../../src/styles/registry.js';
 
 describe('styles registry', () => {
-  it('contains crystal, toon, xray, blueprint, synthwave, watercolor, and papercraft styles', () => {
+  it('contains all 14 styles', () => {
     expect(STYLES.crystal).toBeDefined();
     expect(STYLES.toon).toBeDefined();
     expect(STYLES.xray).toBeDefined();
     expect(STYLES.blueprint).toBeDefined();
+    expect(STYLES.iridescence).toBeDefined();
     expect(STYLES.synthwave).toBeDefined();
     expect(STYLES.watercolor).toBeDefined();
     expect(STYLES.papercraft).toBeDefined();
+    expect(STYLES.velvet).toBeDefined();
+    expect(STYLES.pixelDither).toBeDefined();
+    expect(STYLES.origami).toBeDefined();
+    expect(STYLES.stencil).toBeDefined();
+    expect(STYLES.selectiveBloom).toBeDefined();
+    expect(STYLES.outline).toBeDefined();
   });
 
-  it('lists all seven styles in STYLE_LIST', () => {
+  it('lists all 14 styles in STYLE_LIST', () => {
     const ids = STYLE_LIST.map(s => s.id);
-    expect(ids).toContain('xray');
-    expect(ids).toContain('crystal');
-    expect(ids).toContain('toon');
-    expect(ids).toContain('blueprint');
-    expect(ids).toContain('synthwave');
-    expect(ids).toContain('watercolor');
-    expect(ids).toContain('papercraft');
-    expect(STYLE_LIST).toHaveLength(7);
+    const expected = [
+      'xray', 'crystal', 'toon', 'blueprint', 'iridescence',
+      'synthwave', 'watercolor', 'papercraft', 'velvet',
+      'pixelDither', 'origami', 'stencil', 'selectiveBloom', 'outline'
+    ];
+    expected.forEach(id => expect(ids).toContain(id));
+    expect(STYLE_LIST).toHaveLength(14);
   });
 
   it('getStyle falls back to xray for invalid/unknown style ids', () => {
