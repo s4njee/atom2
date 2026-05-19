@@ -6,6 +6,12 @@ import { iridescence } from './iridescence.js';
 import { synthwave } from './synthwave.js';
 import { watercolor } from './watercolor.js';
 import { papercraft } from './papercraft.js';
+import { velvet } from './velvet.js';
+import { pixelDither } from './pixelDither.js';
+import { origami } from './origami.js';
+import { stencil } from './stencil.js';
+import { selectiveBloom } from './selectiveBloom.js';
+import { outline } from './outline.js';
 
 export const STYLES = {
   crystal,
@@ -16,6 +22,12 @@ export const STYLES = {
   synthwave,
   watercolor,
   papercraft,
+  velvet,
+  pixelDither,
+  origami,
+  stencil,
+  selectiveBloom,
+  outline,
 };
 
 export const STYLE_LIST = [
@@ -27,6 +39,12 @@ export const STYLE_LIST = [
   synthwave,
   watercolor,
   papercraft,
+  velvet,
+  pixelDither,
+  origami,
+  stencil,
+  selectiveBloom,
+  outline,
 ];
 
 export function getStyle(id) {

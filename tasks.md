@@ -45,10 +45,10 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 - [ ] Slow-moving gradient background.
 - [ ] Register + add to `STYLE_LIST`.
 
-### Velvet / Minnaert — **S**
-- [ ] Create `src/styles/velvet.js`.
-- [ ] BRDF: `(N·L * N·V)^(k-1) * N·L`, k ≈ 1.5–2 (or simpler: `color * pow(1 - N·V, k)` over low diffuse).
-- [ ] Register + add to `STYLE_LIST`.
+### Velvet / Minnaert — **S** ✅
+- [x] Create `src/styles/velvet.js`.
+- [x] BRDF: `(N·L * N·V)^(k-1) * N·L`, k ≈ 1.5–2 (or simpler: `color * pow(1 - N·V, k)` over low diffuse).
+- [x] Register + add to `STYLE_LIST`.
 
 ### Subsurface scattering (wax / jade) — **M**
 - [ ] Create `src/styles/sss.js`.
@@ -91,12 +91,12 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 - [ ] 2–3 ink palette + paper.
 - [ ] Register + add to `STYLE_LIST`.
 
-### Stencil cutout — **S/M**
-- [ ] Create `src/styles/stencil.js`.
-- [ ] Pure flat per-atom/bond/ring color (no lighting).
-- [ ] Draw each mesh twice: offset + tinted dark for shadow, then full color on top.
+### Stencil cutout — **S/M** ✅
+- [x] Create `src/styles/stencil.js`.
+- [x] Pure flat per-atom/bond/ring color (no lighting).
+- [x] Draw each mesh twice: offset + tinted dark for shadow, then full color on top. *(via instanced shadow meshes premultiplied with a small world-space translation)*
 - [ ] Palette: one shade per detected functional group.
-- [ ] Register + add to `STYLE_LIST`.
+- [x] Register + add to `STYLE_LIST`.
 
 ---
 
@@ -110,13 +110,13 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 - [ ] Phosphor-green color theme.
 - [ ] Register + add to `STYLE_LIST`.
 
-### Pixel-art dither — **S**
-- [ ] Create `src/styles/pixelDither.js`.
-- [ ] Render to low-res target (~256 wide).
-- [ ] Bayer 4×4 / 8×8 dither against a fixed palette in a fragment pass.
-- [ ] Upscale nearest-neighbor to canvas.
+### Pixel-art dither — **S** ✅
+- [x] Create `src/styles/pixelDither.js`.
+- [x] Render to low-res target (~256 wide). *(implemented as UV snap to a chunky-pixel grid in the post-pass — single composer pass, no separate low-res RT)*
+- [x] Bayer 4×4 / 8×8 dither against a fixed palette in a fragment pass.
+- [x] Upscale nearest-neighbor to canvas. *(implicit — the post-pass writes at full res with snapped UVs)*
 - [ ] Fallback heuristic for very large molecules (skip or downgrade).
-- [ ] Register + add to `STYLE_LIST`.
+- [x] Register + add to `STYLE_LIST`.
 
 ### ASCII / terminal — **M**
 - [ ] Create `src/styles/ascii.js`.
@@ -226,12 +226,12 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 
 ## 6. Geometric / sculptural
 
-### Origami / faceted — **S**
-- [ ] Create `src/styles/origami.js`.
-- [ ] Quantize normals: `N = normalize(round(N * k) / k)`, k ≈ 6.
-- [ ] Flat (per-face) shading.
+### Origami / faceted — **S** ✅
+- [x] Create `src/styles/origami.js`.
+- [x] Quantize normals: `N = normalize(round(N * k) / k)`, k ≈ 6.
+- [x] Flat (per-face) shading. *(derived from `cross(dFdx, dFdy)` of view-space position)*
 - [ ] Paper-fiber multiply overlay.
-- [ ] Register + add to `STYLE_LIST`.
+- [x] Register + add to `STYLE_LIST`.
 
 ### Liquid mercury — **M**
 - [ ] Create `src/styles/mercury.js`.
@@ -260,11 +260,11 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 
 These do **not** get their own arrow-key slot — they're modifiers on top of any base style.
 
-### Selective bloom — **S**
-- [ ] Create `src/styles/postprocess/selectiveBloom.js`.
-- [ ] Stencil mask render of the bloom subset (halogens or hovered functional group).
-- [ ] Reuse existing `UnrealBloomPass` from [xray.js](src/styles/xray.js); composite back.
-- [ ] Expose toggle (keyboard or UI) independent of the up/down arrow style cycle.
+### Selective bloom — **S** ✅
+- [x] Create `src/styles/selectiveBloom.js`. *(lives at top level, not under postprocess/, since for now it's a full style in the cycle)*
+- [x] Stencil mask render of the bloom subset (halogens or hovered functional group). *(in-shader: per-fragment halogen detection by instance-color match → bright color, otherwise muted; UnrealBloom catches the brightness)*
+- [x] Reuse existing `UnrealBloomPass`; composite back.
+- [ ] Expose toggle (keyboard or UI) independent of the up/down arrow style cycle. *(deferred — currently reachable through the style cycle as 'Halogen glow')*
 
 ### Depth of field with bokeh — **M**
 - [ ] Create `src/styles/postprocess/dof.js`.
@@ -283,10 +283,10 @@ These do **not** get their own arrow-key slot — they're modifiers on top of an
 - [ ] Render two styles to two targets; composite `mix(a, b, slider)`.
 - [ ] Slider UI for picking two `STYLE_LIST` entries + blend amount.
 
-### Outline-only overlay — **S**
-- [ ] Create `src/styles/postprocess/outline.js`.
-- [ ] Sobel on depth + normal buffers; configurable thickness & color.
-- [ ] Replace inverted-hull outlines in toon/blueprint if quality matches.
+### Outline-only overlay — **S** ✅
+- [x] Create `src/styles/outline.js`. *(lives at top level, not under postprocess/, since for now it's a full style in the cycle)*
+- [x] Sobel on depth + normal buffers; configurable thickness & color. *(implemented using Three's built-in `OutlinePass` — selectedObjects updated in `onMoleculeChanged`)*
+- [ ] Replace inverted-hull outlines in toon/blueprint if quality matches. *(deferred — needs a side-by-side comparison first)*
 
 ### SSAO — **S/M**
 - [ ] Create `src/styles/postprocess/ssao.js`.
