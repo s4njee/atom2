@@ -4,7 +4,7 @@ import { getSharedGeometry } from './scene/geometry.js';
 import { buildMoleculeMeshes, disposeMoleculeMeshes } from './scene/builder.js';
 import { fitCamera } from './scene/fitCamera.js';
 import { createPubChemClient } from './pubchem/client.js';
-import { getStyle } from './styles/registry.js';
+import { getStyle, STYLE_LIST } from './styles/registry.js';
 import { createSearchBar } from './ui/searchBar.js';
 import { createStyleSelector } from './ui/styleSelector.js';
 import { createSidebar } from './ui/sidebar.js';
@@ -234,5 +234,25 @@ export function startApp() {
     styleSelector.setValue(id);
     const cid = store.get().molecule?.cid ?? null;
     writeURLState({ cid, style: id });
+    flashStyleName(next.name);
   }
+
+  let styleFlashTimer = null;
+  function flashStyleName(name) {
+    status.set(name);
+    if (styleFlashTimer) clearTimeout(styleFlashTimer);
+    styleFlashTimer = setTimeout(() => status.set(''), 900);
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+    const t = e.target;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+    e.preventDefault();
+    const idx = STYLE_LIST.findIndex((s) => s.id === activeStyle.id);
+    const len = STYLE_LIST.length;
+    const step = e.key === 'ArrowDown' ? 1 : -1;
+    const next = STYLE_LIST[((idx < 0 ? 0 : idx) + step + len) % len];
+    switchStyle(next.id);
+  });
 }
