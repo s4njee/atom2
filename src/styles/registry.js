@@ -9,8 +9,6 @@ import { papercraft } from './papercraft.js';
 import { velvet } from './velvet.js';
 import { pixelDither } from './pixelDither.js';
 import { origami } from './origami.js';
-import { stencil } from './stencil.js';
-import { selectiveBloom } from './selectiveBloom.js';
 import { outline } from './outline.js';
 
 export const STYLES = {
@@ -25,8 +23,6 @@ export const STYLES = {
   velvet,
   pixelDither,
   origami,
-  stencil,
-  selectiveBloom,
   outline,
 };
 
@@ -42,8 +38,6 @@ export const STYLE_LIST = [
   velvet,
   pixelDither,
   origami,
-  stencil,
-  selectiveBloom,
   outline,
 ];
 
