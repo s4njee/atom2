@@ -53,11 +53,15 @@ export function createViewer(container) {
     camera.updateProjectionMatrix();
   }
 
+  const updateCallbacks = new Set();
   let raf = null;
   function start() {
     if (raf != null) return;
     const tick = () => {
       controls.update();
+      for (const cb of updateCallbacks) {
+        try { cb(); } catch (err) { console.error(err); }
+      }
       composer.render();
       raf = requestAnimationFrame(tick);
     };
@@ -74,6 +78,8 @@ export function createViewer(container) {
   return {
     scene, camera, renderer, controls, composer,
     setLights, setBackground, setEnvironment, setPostProcessing,
+    addUpdateCallback: (cb) => updateCallbacks.add(cb),
+    removeUpdateCallback: (cb) => updateCallbacks.delete(cb),
     resize, start, stop,
   };
 }
