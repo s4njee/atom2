@@ -62,7 +62,11 @@ export function createViewer(container) {
       for (const cb of updateCallbacks) {
         try { cb(); } catch (err) { console.error(err); }
       }
-      composer.render();
+      if (activeExtraPasses.length === 0) {
+        renderer.render(scene, camera);
+      } else {
+        composer.render();
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -81,5 +85,6 @@ export function createViewer(container) {
     addUpdateCallback: (cb) => updateCallbacks.add(cb),
     removeUpdateCallback: (cb) => updateCallbacks.delete(cb),
     resize, start, stop,
+    currentMolecule: null,
   };
 }

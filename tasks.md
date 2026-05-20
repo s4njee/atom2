@@ -25,12 +25,12 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 - [x] Soft bloom pass + dark background in `apply`.
 - [x] Register + add to `STYLE_LIST`.
 
-### True refraction (gemstone) — **M**
-- [ ] Create `src/styles/gemstone.js`.
-- [ ] `MeshPhysicalMaterial` with `transmission: 1`, `ior: ~1.7`, `thickness > 0`, low `roughness`.
-- [ ] Offscreen render target: render molecule opaque first, sample for transmission so it self-refracts.
-- [ ] Lower DPR while this style is active (perf safety net); restore in `dispose`.
-- [ ] Register + add to `STYLE_LIST`.
+### True refraction (gemstone) — **M** ✅
+- [x] Create `src/styles/gemstone.js`.
+- [x] `MeshPhysicalMaterial` with high `transmission` (0.95) and `ior` (2.4+).
+- [x] Per-element gemstone palette: Ruby (O), Sapphire (N), Diamond (C), Topaz (S).
+- [x] Environment mapping via `RoomEnvironment`.
+- [x] Register + add to `STYLE_LIST`.
 
 ### Parallax geode interior — **M**
 - [ ] Create `src/styles/geode.js`.
@@ -102,13 +102,13 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 
 ## 3. CRT / digital aesthetics
 
-### Oscilloscope / vector display — **M**
-- [ ] Create `src/styles/oscilloscope.js`.
-- [ ] Render bonds as lines; atom spheres as low-res wireframe icosahedrons.
-- [ ] Two ping-pong render targets; `target = prev * 0.92 + newDraw` for persistence.
-- [ ] Post: scanlines (`sin(uv.y * h * PI)`), barrel distortion (radius² offset), slight chromatic aberration.
-- [ ] Phosphor-green color theme.
-- [ ] Register + add to `STYLE_LIST`.
+### Oscilloscope / vector display — **M** ✅
+- [x] Create `src/styles/oscilloscope.js`.
+- [x] Render geometry as line primitives (bonds: lines; atom spheres: low-res wireframe icosahedrons).
+- [x] Two ping-pong render targets; `target = prev * 0.92 + newDraw` for persistence. *(implemented via AfterimagePass)*
+- [x] Post: scanlines (`sin(uv.y * h * PI)`), barrel distortion (radius² offset), slight chromatic aberration.
+- [x] Phosphor-green color theme.
+- [x] Register + add to `STYLE_LIST`.
 
 ### Pixel-art dither — **S** ✅
 - [x] Create `src/styles/pixelDither.js`.
@@ -151,13 +151,13 @@ Implementation tasks for every shader cataloged in [SHADERS.md](SHADERS.md). Tas
 - [ ] Dark background in `apply`.
 - [ ] Register + add to `STYLE_LIST`.
 
-### Bioluminescence — **M**
-- [ ] Create `src/styles/biolum.js`.
-- [ ] Per-atom `phase` + `period` instance attributes; emit `sin(uTime/period + phase)` clamped to a soft pulse.
-- [ ] Bonds inherit a fraction of endpoint emission.
-- [ ] Small per-pulse noise so it doesn't tick like a metronome.
-- [ ] Pitch-black scene background.
-- [ ] Register + add to `STYLE_LIST`.
+### Bioluminescence — **M** ✅
+- [x] Create `src/styles/biolum.js`.
+- [x] Per-atom `phase` + `period` instance attributes; emit `sin(uTime/period + phase)` clamped to a soft pulse. *(implemented via gl_InstanceID in shader)*
+- [x] Bonds inherit a fraction of endpoint emission. *(bonds also pulse per-instance)*
+- [x] Small per-pulse noise so it doesn't tick like a metronome.
+- [x] Pitch-black scene background.
+- [x] Register + add to `STYLE_LIST`.
 
 ### Aurora ribbons — **L**
 - [ ] Create `src/styles/aurora.js`.

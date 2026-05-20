@@ -20,6 +20,7 @@ export const GROUP_COLORS = {
   alkyne:       '#bedc7a',
   phosphate:    '#ff9bd1',
   sulfonyl:     '#fff176',
+  'r-chain':    '#afff79',
 };
 
 const HALIDES = new Set(['F', 'Cl', 'Br', 'I']);
@@ -310,6 +311,66 @@ export function detectFunctionalGroups(molecule, aromaticRings = []) {
     if (b.order !== 3 || elem(b.a) !== 'C' || elem(b.b) !== 'C') continue;
     startInstance('alkyne');
     addLength(i, GROUP_COLORS.alkyne, 'C≡C', 'alkyne');
+  }
+
+  // --- Amino Acid Specific Annotation ---
+  // If we see an amine and a carboxyl connected to the same (alpha) carbon,
+  // relabel them to the more specific "Amino group" and "Carboxylic acid".
+  const amineInstances = instances.filter((inst) => inst.group === 'amine');
+  const carboxylInstances = instances.filter((inst) => inst.group === 'carboxyl');
+
+  for (const amine of amineInstances) {
+    const nIdx = Array.from(amine.atomIndices).find((i) => elem(i) === 'N');
+    if (nIdx === undefined) continue;
+
+    for (const n of neighbors[nIdx]) {
+      if (elem(n.atom) !== 'C') continue;
+      const alphaIdx = n.atom;
+
+      // Check if alpha carbon is connected to a carboxyl carbon
+      const carboxylNeighbor = neighbors[alphaIdx].find((an) => {
+        return carboxylInstances.some((cInst) => cInst.atomIndices.has(an.atom) && elem(an.atom) === 'C' && an.atom !== alphaIdx);
+      });
+
+      if (carboxylNeighbor) {
+        const carboxyl = carboxylInstances.find((cInst) => cInst.atomIndices.has(carboxylNeighbor.atom));
+
+        // Relabel amine lengths to "Amino group"
+        for (const l of lengths) {
+          if (l.instanceId === amine.id) {
+            l.prefix = 'Amino group';
+          }
+        }
+        // Relabel carboxyl lengths to "Carboxylic acid"
+        for (const l of lengths) {
+          if (l.instanceId === carboxyl.id) {
+            l.prefix = 'Carboxylic acid';
+          }
+        }
+
+        // Identify and label the R-chain
+        // The R-chain is any neighbor of alphaIdx that is NOT the amine N, NOT the carboxyl C, and NOT the alpha-hydrogen.
+        // For glycine, it will be the "other" H. For others, it will be a C.
+        const rNeighbors = neighbors[alphaIdx].filter((an) => {
+          return an.atom !== nIdx && an.atom !== carboxylNeighbor.atom;
+        });
+
+        // Usually there is one H and one R group. We'll pick the non-H one if it exists,
+        // otherwise pick one of the H's (for glycine).
+        let rEntry = rNeighbors.find((an) => elem(an.atom) !== 'H');
+        if (!rEntry && rNeighbors.length > 0) rEntry = rNeighbors[0];
+
+        if (rEntry) {
+          lengths.push({
+            bondIdx: rEntry.bondIdx,
+            color: GROUP_COLORS['r-chain'],
+            prefix: 'R chain',
+            group: 'r-chain',
+            instanceId: -1,
+          });
+        }
+      }
+    }
   }
 
   return { lengths, angles, instances };

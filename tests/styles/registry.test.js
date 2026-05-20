@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { getStyle, STYLE_LIST, STYLES } from '../../src/styles/registry.js';
 
 describe('styles registry', () => {
-  it('contains all 12 styles', () => {
+  it('contains all 15 styles', () => {
     expect(STYLES.crystal).toBeDefined();
     expect(STYLES.toon).toBeDefined();
     expect(STYLES.xray).toBeDefined();
@@ -15,17 +15,20 @@ describe('styles registry', () => {
     expect(STYLES.pixelDither).toBeDefined();
     expect(STYLES.origami).toBeDefined();
     expect(STYLES.outline).toBeDefined();
+    expect(STYLES.oscilloscope).toBeDefined();
+    expect(STYLES.biolum).toBeDefined();
+    expect(STYLES.gemstone).toBeDefined();
   });
 
-  it('lists all 12 styles in STYLE_LIST', () => {
+  it('lists all 15 styles in STYLE_LIST', () => {
     const ids = STYLE_LIST.map(s => s.id);
     const expected = [
       'xray', 'crystal', 'toon', 'blueprint', 'iridescence',
       'synthwave', 'watercolor', 'papercraft', 'velvet',
-      'pixelDither', 'origami', 'outline'
+      'pixelDither', 'origami', 'outline', 'oscilloscope', 'biolum', 'gemstone'
     ];
     expected.forEach(id => expect(ids).toContain(id));
-    expect(STYLE_LIST).toHaveLength(12);
+    expect(STYLE_LIST).toHaveLength(15);
   });
 
   it('getStyle falls back to xray for invalid/unknown style ids', () => {

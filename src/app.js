@@ -159,6 +159,7 @@ export function startApp() {
     if (meshes.atoms) viewer.scene.add(meshes.atoms);
     if (meshes.bonds) viewer.scene.add(meshes.bonds);
     if (meshes.rings) viewer.scene.add(meshes.rings);
+    viewer.currentMolecule = data;
     activeStyle.onMoleculeChanged(viewer, meshes);
     fitCamera(viewer, meshes);
     store.set({ molecule: data, meshes });
@@ -228,6 +229,11 @@ export function startApp() {
     if (next.id === activeStyle.id) return;
     const meshes = store.get().meshes;
     activeStyle.dispose(viewer, meshes);
+    if (meshes && store.get().molecule) {
+      const data = store.get().molecule;
+      const detected = detectFunctionalGroups(data, data.aromaticRings);
+      applyGroupColors(meshes, data, detected.instances, focusedGroup);
+    }
     next.apply(viewer, meshes);
     activeStyle = next;
     store.set({ style: id });

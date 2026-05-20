@@ -10,6 +10,9 @@ import { velvet } from './velvet.js';
 import { pixelDither } from './pixelDither.js';
 import { origami } from './origami.js';
 import { outline } from './outline.js';
+import { oscilloscope } from './oscilloscope.js';
+import { biolum } from './biolum.js';
+import { gemstone } from './gemstone.js';
 
 export const STYLES = {
   crystal,
@@ -24,6 +27,9 @@ export const STYLES = {
   pixelDither,
   origami,
   outline,
+  oscilloscope,
+  biolum,
+  gemstone,
 };
 
 export const STYLE_LIST = [
@@ -39,6 +45,9 @@ export const STYLE_LIST = [
   pixelDither,
   origami,
   outline,
+  oscilloscope,
+  biolum,
+  gemstone,
 ];
 
 export function getStyle(id) {
