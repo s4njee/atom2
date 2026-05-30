@@ -12,22 +12,29 @@
 
 * { box-sizing: border-box; }
 
+/* Structural only — kept global so the standalone build's body fills the viewport.
+   Cosmetics (background/font/color) live on .atom2-app so embedding the app inside
+   the eva shell doesn't restyle the host page. */
 html, body {
   margin: 0;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Root container. Was #app, scoped to a class so it doesn't collide with the eva
+   shell's React mount (<div id="app">). The standalone index.html carries this class. */
+.atom2-app {
+  display: grid;
+  grid-template-areas: "top top" "side canvas";
+  grid-template-rows: 56px 1fr;
+  grid-template-columns: 240px 1fr;
+  width: 100%;
   height: 100%;
   overflow: hidden;
   font-family: system-ui, -apple-system, sans-serif;
   background: var(--bg);
   color: var(--text);
   color-scheme: dark;
-}
-
-#app {
-  display: grid;
-  grid-template-areas: "top top" "side canvas";
-  grid-template-rows: 56px 1fr;
-  grid-template-columns: 240px 1fr;
-  height: 100%;
 }
 
 #topbar {

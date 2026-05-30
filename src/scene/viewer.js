@@ -79,12 +79,24 @@ export function createViewer(container) {
   window.addEventListener('resize', resize);
   resize();
 
+  // Release every GPU/DOM/window resource this viewer owns. Needed when the
+  // viewer is embedded in a host that mounts/unmounts it (e.g. the eva shell).
+  function dispose() {
+    stop();
+    window.removeEventListener('resize', resize);
+    setPostProcessing([]);
+    controls.dispose();
+    composer.dispose();
+    renderer.dispose();
+    renderer.domElement.remove();
+  }
+
   return {
     scene, camera, renderer, controls, composer,
     setLights, setBackground, setEnvironment, setPostProcessing,
     addUpdateCallback: (cb) => updateCallbacks.add(cb),
     removeUpdateCallback: (cb) => updateCallbacks.delete(cb),
-    resize, start, stop,
+    resize, start, stop, dispose,
     currentMolecule: null,
   };
 }

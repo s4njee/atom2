@@ -250,15 +250,33 @@ export function startApp() {
     styleFlashTimer = setTimeout(() => status.set(''), 900);
   }
 
-  window.addEventListener('keydown', (e) => {
-    if (e.key !== 'ArrowUp' && e.key !== 'ArrowDown') return;
+  // Cycle visual styles with [ and ]. ArrowUp/ArrowDown are intentionally left
+  // for the host shell (eva) to switch scenes; see src/atom/AtomCanvas.jsx.
+  function onKeyDown(e) {
+    if (e.key !== '[' && e.key !== ']') return;
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
     e.preventDefault();
     const idx = STYLE_LIST.findIndex((s) => s.id === activeStyle.id);
     const len = STYLE_LIST.length;
-    const step = e.key === 'ArrowDown' ? 1 : -1;
+    const step = e.key === ']' ? 1 : -1;
     const next = STYLE_LIST[((idx < 0 ? 0 : idx) + step + len) % len];
     switchStyle(next.id);
-  });
+  }
+  window.addEventListener('keydown', onKeyDown);
+
+  // Release everything when an embedding host unmounts the app, so repeated
+  // mount/unmount cycles don't leak RAF loops, window listeners, or GL contexts.
+  return function teardown() {
+    window.removeEventListener('keydown', onKeyDown);
+    if (styleFlashTimer) clearTimeout(styleFlashTimer);
+    clearMeasurements();
+    const meshes = store.get().meshes;
+    if (meshes) {
+      for (const m of [meshes.atoms, meshes.bonds, meshes.rings]) if (m) viewer.scene.remove(m);
+      disposeMoleculeMeshes(meshes);
+    }
+    try { activeStyle.dispose(viewer, meshes); } catch { /* style already torn down */ }
+    viewer.dispose();
+  };
 }
