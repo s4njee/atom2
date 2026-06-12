@@ -10,22 +10,15 @@ export function createMeasurementToggles(container, { onChange }) {
     btn.type = 'button';
     btn.textContent = label;
     btn.setAttribute('aria-pressed', 'false');
-    applyStyle(btn, false);
+    btn.className = 'toggle-btn';
     btn.addEventListener('click', () => {
       state[key] = !state[key];
       btn.setAttribute('aria-pressed', String(state[key]));
-      applyStyle(btn, state[key]);
+      btn.classList.toggle('is-on', state[key]);
       onChange({ ...state });
     });
     container.appendChild(btn);
     return btn;
-  }
-
-  function applyStyle(btn, on) {
-    btn.style.background = on ? '#1f3a5e' : '#0d1117';
-    btn.style.borderColor = on ? '#58a6ff' : '#252b34';
-    btn.style.color = on ? '#cfe6ff' : '#d8dde6';
-    btn.style.cursor = 'pointer';
   }
 
   makeToggle('Bond lengths', 'lengths');

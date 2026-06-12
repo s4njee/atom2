@@ -3,22 +3,6 @@ import { getName, getAtomicNumber, getElectronConfig } from '../chem/elements.js
 export function createAtomTooltip(container) {
   const el = document.createElement('div');
   el.className = 'atom-tooltip';
-  el.style.cssText = [
-    'position:absolute',
-    'pointer-events:none',
-    'padding:6px 10px',
-    'background:rgba(20,20,28,0.92)',
-    'color:#fff',
-    'border:1px solid rgba(255,255,255,0.15)',
-    'border-radius:4px',
-    'font:12px system-ui, sans-serif',
-    'line-height:1.4',
-    'transform:translate(12px,12px)',
-    'pointer-events:none',
-    'z-index:20',
-    'display:none',
-    'white-space:nowrap',
-  ].join(';');
   container.appendChild(el);
 
   function show(atom, x, y) {
