@@ -23,6 +23,31 @@ import { readURLState, writeURLState } from './state/url.js';
 import { addRecent } from './state/storage.js';
 
 export function startApp() {
+  const appEl = document.querySelector('.atom2-app');
+  const topbar = document.getElementById('topbar');
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.id = 'sidebar-toggle';
+  toggleBtn.className = 'sidebar-toggle-btn';
+  toggleBtn.setAttribute('aria-label', 'Toggle sidebar');
+  toggleBtn.setAttribute('aria-expanded', 'false');
+  toggleBtn.textContent = '☰';
+  topbar.insertBefore(toggleBtn, topbar.firstChild);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'sidebar-overlay';
+  appEl.appendChild(overlay);
+
+  const closeSidebar = () => {
+    appEl.classList.remove('sidebar-open');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+  };
+  toggleBtn.addEventListener('click', () => {
+    const open = appEl.classList.toggle('sidebar-open');
+    toggleBtn.setAttribute('aria-expanded', String(open));
+  });
+  overlay.addEventListener('click', closeSidebar);
+
   const canvasContainer = document.getElementById('canvas-container');
   const viewer = createViewer(canvasContainer);
   viewer.start();
@@ -76,7 +101,7 @@ export function startApp() {
   });
 
   const sidebar = createSidebar(document.getElementById('sidebar-lists'), {
-    onPick: (entry) => loadCID(entry.cid, entry.name),
+    onPick: (entry) => { closeSidebar(); loadCID(entry.cid, entry.name); },
   });
 
   let measureState = { lengths: false, angles: false };
